@@ -1,3 +1,2 @@
-database.py
-bot.py
-.gitignore
+/database.py
+/bot.py
