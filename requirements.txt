@@ -1,7 +1,3 @@
 discord
 discord.py
 requests
-praw
-psycopg2
-wikipedia
-pyowm

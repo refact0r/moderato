@@ -8,10 +8,9 @@ class error(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-    # if command has local error handler, return
+        # if command has local error handler, return
         if hasattr(ctx.command, 'on_error'):
             return
 
@@ -51,7 +50,6 @@ class error(commands.Cog):
 
         if isinstance(error, commands.UserInputError):
             await ctx.send("Invalid input.")
-            await self.send_command_help(ctx)
             return
 
         if isinstance(error, commands.NoPrivateMessage):
@@ -64,9 +62,6 @@ class error(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             await ctx.send("You do not have permission to use this command.")
             return
-
-    
-    
     
 
 def setup(client):
