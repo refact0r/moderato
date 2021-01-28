@@ -1,8 +1,6 @@
 import discord
 import os
 from discord.ext import commands
-from datetime import datetime
-import pymongo
 
 bot_token = ""
 
