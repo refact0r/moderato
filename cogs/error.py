@@ -62,6 +62,8 @@ class error(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             await ctx.send("You do not have permission to use this command.")
             return
+
+        print(error)
     
 
 def setup(client):
