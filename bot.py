@@ -4,7 +4,7 @@ from discord.ext import commands
 from datetime import datetime
 import pymongo
 
-bot_token = "ODA0MTA0NjI3ODI5MjExMTQ2.YBHeyg.x2aifYvba1AMhxWz2kp4zf54toU"
+bot_token = ""
 
 intents = discord.Intents.default()
 intents.members = True
