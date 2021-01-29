@@ -7,9 +7,6 @@ import pymongo
 cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
 db = cluster['discordbot']
 
-descriptions = {
-    'utility': "General utility commands."
-}
 cog_blacklist = ['error']
 
 class utility(commands.Cog):
@@ -18,7 +15,7 @@ class utility(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(aliases = ['h'])
+    @commands.command(aliases = ['h'], brief = "Shows all commands, commands in a category, or information about a command", help = "%help (category or command)")
     async def help(self, ctx, command = None):
         embeds = []
         embeds.append(discord.Embed(
@@ -26,6 +23,7 @@ class utility(commands.Cog):
             description = """
                 Click the reactions to go to specific categories, or use `%help [category]`.
                 To get information about a specific command, use `%help [command]`.
+                `()` means an optional argument, `[]` means a required argument.
             """,
             color = 0x4f85f6
         ))
@@ -41,6 +39,7 @@ class utility(commands.Cog):
                     description = """
                         Click the reactions to go to specific categories, or use `%help [category]`.
                         To get information about a specific command, use `%help [command]`.
+                        `()` means an optional argument, `[]` means a required argument.
                     """,
                     color = 0x4f85f6
                 )
@@ -87,7 +86,6 @@ class utility(commands.Cog):
                     current += 1
 
             await msg.edit(embed = embeds[current - 1])
-
 
     @commands.command(brief = "Says hello back.", help = "%hi")
     async def hi(self, ctx):
