@@ -48,7 +48,8 @@ class utility(commands.Cog):
 
                 commands_string = ""
                 for command in cog.get_commands():
-                    commands_string += f"```{command.help}```{command.brief}"
+                    if command.help and command.brief:
+                        commands_string += f"```{command.help}```{command.brief}"
                 
                 embed.add_field(name = cog_name.capitalize(), value = commands_string, inline = False)
                 embeds[0].add_field(name = f"Page {count} - {cog_name.capitalize()}", value = cog.description, inline = False)
@@ -95,10 +96,12 @@ class utility(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def ping(self, ctx):
         collection = db['ping']
+
         before = time.monotonic()
         message = await ctx.send("Pong!")
         ping = int((time.monotonic() - before) * 1000)
         await message.edit(content = f"Pong! `{ping}ms`")
+
         if ping < collection.find_one({'_id': 0})['time']:
             collection.update_one({'_id': 0}, {'$set': {'time': ping, 'name': ctx.author.name}})
         if ping > collection.find_one({'_id': 1})['time']:
@@ -109,6 +112,7 @@ class utility(commands.Cog):
         collection = db['ping']
         fastest = collection.find_one({'_id': 0})
         slowest = collection.find_one({'_id': 1})
+        
         embed = discord.Embed(
             title = "Ping Leaderboard",
             description = f"Fastest: `{fastest['time']}` ms by {fastest['name']}\nSlowest: `{slowest['time']}` ms by {slowest['name']}",
