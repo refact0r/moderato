@@ -23,9 +23,6 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if client.user.mentioned_in(message):
-        await message.channel.send(f"""
-            The current prefix is `{prefixes[0]}`.
-            Type `{prefixes[0]}help` for more info.
-        """)
+        await message.channel.send(f"The current prefix is `{prefixes[0]}`.\nType `{prefixes[0]}help` for more info.")
 
 client.run(bot_token)
