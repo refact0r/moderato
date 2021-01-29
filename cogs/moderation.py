@@ -36,9 +36,11 @@ class moderation(commands.Cog):
                 prev_num.append(character)
         return float(total_seconds)
 
-    async def add_role(self, members, role, time):
+    async def add_role(self, members, role, time, msg, edit):
         for member in members:
             await member.add_roles(role)
+        if msg and edit:
+            await msg.edit(content = edit)
         if time <= 0:
             return
         await asyncio.sleep(time)
@@ -65,12 +67,12 @@ class moderation(commands.Cog):
 
         if args == "all":
             if len(ctx.guild.members) > 100:
-                await ctx.send("`%mute all` cannot be used on guilds with over 50 members.")
+                await ctx.send("You cannot mute more than 100 users at once.")
                 return
             members = ctx.guild.members
         elif len(args) == 2 and args.split[' '][0] == "all":
             if len(ctx.guild.members) > 100:
-                await ctx.send("`%mute all` cannot be used on guilds with over 50 members.")
+                await ctx.send("You cannot mute more than 100 users at once.")
                 return
             members = ctx.guild.members
             time = self.duration(args.split[' '][1])
@@ -138,8 +140,24 @@ class moderation(commands.Cog):
                         except:
                             pass
 
-        await ctx.send([u.name for u in members])
-        await ctx.send(time)
+        members = list(set(members)) 
+        
+        if len(members) > 100:
+            await ctx.send("You cannot mute more than 100 users at once.")
+            return
+
+        msg = None
+        edit_string = None
+        if not members:
+            await ctx.send("No users found.")
+            return
+        elif len(members) == 1:
+            await ctx.send(f"{members[0].display_name} was muted.")
+        else:
+            msg = await ctx.send(f"Muting the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
+            edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted."
+
+        await self.add_role(members, role, time, msg, edit_string)
 
 def setup(client):
     client.add_cog(moderation(client))

@@ -8,6 +8,7 @@ cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2
 db = cluster['discordbot']
 
 cog_blacklist = ['error']
+cog_order = ['utility', 'moderation']
 
 class utility(commands.Cog):
     """General utility commands."""
@@ -30,7 +31,7 @@ class utility(commands.Cog):
         embeds[0].set_footer(text = f"Page 1/{len(self.client.cogs) - len(cog_blacklist) + 1}")
 
         count = 2
-        for cog_name in self.client.cogs:
+        for cog_name in cog_order:
             if cog_name not in cog_blacklist:
                 cog = self.client.cogs[cog_name]
 
