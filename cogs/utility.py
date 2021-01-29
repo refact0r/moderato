@@ -86,14 +86,14 @@ class utility(commands.Cog):
                 else:
                     current += 1
 
-            await msg.edit(embed = embeds[current])
+            await msg.edit(embed = embeds[current - 1])
 
 
-    @commands.command(brief = "says hello back", help = "%hi")
+    @commands.command(brief = "Says hello back.", help = "%hi")
     async def hi(self, ctx):
         await ctx.send(f"Hello, {ctx.author.display_name}")
 
-    @commands.command(aliases = ['p'])
+    @commands.command(aliases = ['p'], brief = "Checks the bot's latency.", help = "%ping")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def ping(self, ctx):
         collection = db['ping']
@@ -106,7 +106,7 @@ class utility(commands.Cog):
         if ping > collection.find_one({'_id': 1})['time']:
             collection.update_one({'_id': 1}, {'$set': {'time': ping, 'name': ctx.author.name}})
 
-    @commands.command(aliases = ['pl'])
+    @commands.command(aliases = ['pl', 'plb'], brief = "Gets the fastest and slowest pings achieved.", help = "%pingleaderboard")
     async def pingleaderboard(self, ctx):
         collection = db['ping']
         fastest = collection.find_one({'_id': 0})
