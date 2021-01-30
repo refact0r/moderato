@@ -18,6 +18,7 @@ for file in os.listdir('./cogs'):
 
 @client.event
 async def on_ready():
+	await client.change_presence(activity = discord.Game(name = "Ping me for help"))
 	print("bot has connected to discord")
 
 @client.event

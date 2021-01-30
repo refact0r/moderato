@@ -4,7 +4,6 @@ from discord.ext import commands
 from discord.ext.commands import *
 import pymongo
 from decimal import Decimal
-from datetime import timedelta
 
 cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
 db = cluster['discordbot']
@@ -15,7 +14,7 @@ class moderation(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    def duration(self, duration_string): #example: '5d3h2m1s'
+    def duration(self, duration_string):
         duration_string = duration_string.lower()
         total_seconds = Decimal('0')
         prev_num = []
@@ -47,35 +46,15 @@ class moderation(commands.Cog):
         for member in members:
             await member.remove_roles(role)
 
-    @commands.command(brief = "Prevents a user from sending messages.", help = "%mute [user] (time)")
-    async def mute(self, ctx, *, args):
-        print(args)
-
-        role = None
-        for r in ctx.guild.roles:
-            if r.name == "Muted" or r.name == "muted":
-                role = r
-        if not role:
-            role = await ctx.guild.create_role(name = "Muted", color = discord.Color(0x505050))
-            for channel in ctx.guild.channels:
-                overwrite = discord.PermissionOverwrite()
-                overwrite.send_messages = False
-                await channel.set_permissions(role, overwrite=overwrite)
-
+    async def filter_members(self, ctx, args):
         members = []
         time = 0
 
         if args == "all":
-            if len(ctx.guild.members) > 100:
-                await ctx.send("You cannot mute more than 100 users at once.")
-                return
             members = ctx.guild.members
-        elif len(args) == 2 and args.split[' '][0] == "all":
-            if len(ctx.guild.members) > 100:
-                await ctx.send("You cannot mute more than 100 users at once.")
-                return
+        elif len(args) == 2 and args.split(' ')[0] == "all":
             members = ctx.guild.members
-            time = self.duration(args.split[' '][1])
+            time = self.duration(args.split(' ')[1])
 
         try:
             m = await MemberConverter().convert(ctx, args)
@@ -140,7 +119,28 @@ class moderation(commands.Cog):
                         except:
                             pass
 
-        members = list(set(members)) 
+        return [list(set(members)), time]
+
+    @commands.command(aliases = ["m"], brief = "Prevents a user from sending messages.", help = "%mute [user(s) or role(s)] (time)")
+    async def mute(self, ctx, *, args):
+        if not ctx.author.guild_permissions.manage_roles:
+            await ctx.send("You do not have the permissions to use this command.")
+            return
+
+        role = None
+        for r in ctx.guild.roles:
+            if r.name == "Muted" or r.name == "muted":
+                role = r
+        if not role:
+            role = await ctx.guild.create_role(name = "Muted", color = discord.Color(0x505050))
+            for channel in ctx.guild.channels:
+                overwrite = discord.PermissionOverwrite()
+                overwrite.send_messages = False
+                await channel.set_permissions(role, overwrite=overwrite)
+
+        result = await self.filter_members(ctx, args)
+        members = result[0]
+        time = result[1]
         
         if len(members) > 100:
             await ctx.send("You cannot mute more than 100 users at once.")
@@ -152,10 +152,63 @@ class moderation(commands.Cog):
             await ctx.send("No users found.")
             return
         elif len(members) == 1:
-            await ctx.send(f"{members[0].display_name} was muted.")
+            if time == 0:
+                await ctx.send(f"`{members[0].display_name}` was muted.")
+            else:
+                await ctx.send(f"`{members[0].display_name}` was muted for `{args.split(' ')[-1]}`.")
         else:
             msg = await ctx.send(f"Muting the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
-            edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted."
+            if time == 0:
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted."
+            else:
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted for `{args.split(' ')[-1]}`."
+
+        await self.add_role(members, role, time, msg, edit_string)
+
+    @commands.command(aliases = ["f"], brief = "Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help = "%freeze [user(s) or role(s)] (time)")
+    async def freeze(self, ctx, *, args):
+        if not ctx.author.guild_permissions.manage_roles:
+            await ctx.send("You do not have the permissions to use this command.")
+            return
+
+        role = None
+        for r in ctx.guild.roles:
+            if r.name == "Frozen" or r.name == "frozen":
+                role = r
+        if not role:
+            role = await ctx.guild.create_role(name = "Frozen", color = discord.Color(0x707070))
+            for channel in ctx.guild.channels:
+                overwrite = discord.PermissionOverwrite()
+                overwrite.external_emojis = False
+                overwrite.attach_files = False
+                overwrite.embed_links = False
+                overwrite.add_reactions = False
+                await channel.set_permissions(role, overwrite=overwrite)
+
+        result = await self.filter_members(ctx, args)
+        members = result[0]
+        time = result[1]
+        
+        if len(members) > 100:
+            await ctx.send("You cannot freeze more than 100 users at once.")
+            return
+
+        msg = None
+        edit_string = None
+        if not members:
+            await ctx.send("No users found.")
+            return
+        elif len(members) == 1:
+            if time == 0:
+                await ctx.send(f"`{members[0].display_name}` was frozen.")
+            else:
+                await ctx.send(f"`{members[0].display_name}` was frozen for `{args.split(' ')[-1]}`.")
+        else:
+            msg = await ctx.send(f"Freezing the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
+            if time == 0:
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were frozen."
+            else:
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were frozen for `{args.split(' ')[-1]}`."
 
         await self.add_role(members, role, time, msg, edit_string)
 
