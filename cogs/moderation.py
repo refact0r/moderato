@@ -31,9 +31,22 @@ class moderation(commands.Cog):
                     elif character == 's':
                         total_seconds += num
                     prev_num = []
-            elif character.isnumeric() or character == '.':
+            elif character.isnumeric():
                 prev_num.append(character)
         return float(total_seconds)
+
+    def time(self, seconds):
+        period_seconds = [86400, 3600, 60, 1]
+        period_desc = ['days', 'hours', 'mins', 'secs']
+        s = ''
+        remainder = seconds
+        for i in range(len(period_seconds)):
+            q, remainder = divmod(remainder, period_seconds[i])
+            if q > 0:
+                if s:
+                    s += ' '
+                s += f'{int(q)} {period_desc[i]}'
+        return s
 
     async def add_role(self, members, role, time, msg, edit):
         for member in members:
@@ -71,17 +84,17 @@ class moderation(commands.Cog):
 
         if not members:
             try:
-                m = await MemberConverter().convert(ctx, args.split(' ')[:-1].join(' '))
+                m = await MemberConverter().convert(ctx, ' '.join(args.split(' ')[:-1]))
                 members.append(m)
-                time = self.duration(args.split[' '][-1])
+                time = self.duration(args.split(' ')[-1])
             except:
                 pass
         
         if not members:
             try:
-                r = await RoleConverter().convert(ctx, args.split(' ')[:-1].join(' '))
+                r = await RoleConverter().convert(ctx, ' '.join(args.split(' ')[:-1]))
                 members = r.members
-                time = self.duration(args.split[' '][-1])
+                time = self.duration(args.split(' ')[-1])
             except:
                 pass
 
@@ -155,13 +168,13 @@ class moderation(commands.Cog):
             if time == 0:
                 await ctx.send(f"`{members[0].display_name}` was muted.")
             else:
-                await ctx.send(f"`{members[0].display_name}` was muted for `{args.split(' ')[-1]}`.")
+                await ctx.send(f"`{members[0].display_name}` was muted for `{self.time(time)}`.")
         else:
             msg = await ctx.send(f"Muting the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
             if time == 0:
                 edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted."
             else:
-                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted for `{args.split(' ')[-1]}`."
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted for `{self.time(time)}`."
 
         await self.add_role(members, role, time, msg, edit_string)
 
@@ -176,7 +189,7 @@ class moderation(commands.Cog):
             if r.name == "Frozen" or r.name == "frozen":
                 role = r
         if not role:
-            role = await ctx.guild.create_role(name = "Frozen", color = discord.Color(0x707070))
+            role = await ctx.guild.create_role(name = "Frozen", color = discord.Color.default())
             for channel in ctx.guild.channels:
                 overwrite = discord.PermissionOverwrite()
                 overwrite.external_emojis = False
@@ -202,13 +215,13 @@ class moderation(commands.Cog):
             if time == 0:
                 await ctx.send(f"`{members[0].display_name}` was frozen.")
             else:
-                await ctx.send(f"`{members[0].display_name}` was frozen for `{args.split(' ')[-1]}`.")
+                await ctx.send(f"`{members[0].display_name}` was frozen for `{self.time(time)}`.")
         else:
             msg = await ctx.send(f"Freezing the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
             if time == 0:
                 edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were frozen."
             else:
-                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were frozen for `{args.split(' ')[-1]}`."
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were frozen for `{aself.time(time)}`."
 
         await self.add_role(members, role, time, msg, edit_string)
 
