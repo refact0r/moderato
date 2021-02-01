@@ -59,7 +59,7 @@ class moderation(commands.Cog):
         for member in members:
             await member.remove_roles(role)
 
-    async def filter_members(self, ctx, args):
+    async def parse_args(self, ctx, args):
         members = []
         time = 0
 
@@ -132,7 +132,23 @@ class moderation(commands.Cog):
                         except:
                             pass
 
-        return [list(set(members)), time]
+        return list(set(members)), time
+
+    def generateMessages(self, members, time, past, current):
+        string = None
+        edit_string = None
+        if len(members) == 1:
+            if time == 0:
+                string = f"`{members[0].display_name}` was {past}."
+            else:
+                string = f"`{members[0].display_name}` was {past} for `{self.time(time)}`."
+        else:
+            string = f"{current.capitalize()} the users {', '.join(['`' + m.display_name + '`' for m in members])}..."
+            if time == 0:
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were {past}."
+            else:
+                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were {past} for `{self.time(time)}`."
+        return string, edit_string
 
     @commands.command(aliases = ["m"], brief = "Prevents a user from sending messages.", help = "%mute [user(s) or role(s)] (time)")
     async def mute(self, ctx, *, args):
@@ -151,31 +167,17 @@ class moderation(commands.Cog):
                 overwrite.send_messages = False
                 await channel.set_permissions(role, overwrite=overwrite)
 
-        result = await self.filter_members(ctx, args)
-        members = result[0]
-        time = result[1]
+        members, time = await self.parse_args(ctx, args)
         
+        if not members:
+            await ctx.send("No users found.")
+            return
         if len(members) > 100:
             await ctx.send("You cannot mute more than 100 users at once.")
             return
 
-        msg = None
-        edit_string = None
-        if not members:
-            await ctx.send("No users found.")
-            return
-        elif len(members) == 1:
-            if time == 0:
-                await ctx.send(f"`{members[0].display_name}` was muted.")
-            else:
-                await ctx.send(f"`{members[0].display_name}` was muted for `{self.time(time)}`.")
-        else:
-            msg = await ctx.send(f"Muting the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
-            if time == 0:
-                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted."
-            else:
-                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were muted for `{self.time(time)}`."
-
+        string, edit_string = self.generateMessages(members, time, "muted", "muting")
+        msg = await ctx.send(string)
         await self.add_role(members, role, time, msg, edit_string)
 
     @commands.command(aliases = ["f"], brief = "Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help = "%freeze [user(s) or role(s)] (time)")
@@ -196,33 +198,19 @@ class moderation(commands.Cog):
                 overwrite.attach_files = False
                 overwrite.embed_links = False
                 overwrite.add_reactions = False
-                await channel.set_permissions(role, overwrite=overwrite)
+                await channel.set_permissions(role, overwrite = overwrite)
 
-        result = await self.filter_members(ctx, args)
-        members = result[0]
-        time = result[1]
+        members, time = await self.parse_args(ctx, args)
         
+        if not members:
+            await ctx.send("No users found.")
+            return
         if len(members) > 100:
             await ctx.send("You cannot freeze more than 100 users at once.")
             return
 
-        msg = None
-        edit_string = None
-        if not members:
-            await ctx.send("No users found.")
-            return
-        elif len(members) == 1:
-            if time == 0:
-                await ctx.send(f"`{members[0].display_name}` was frozen.")
-            else:
-                await ctx.send(f"`{members[0].display_name}` was frozen for `{self.time(time)}`.")
-        else:
-            msg = await ctx.send(f"Freezing the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
-            if time == 0:
-                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were frozen."
-            else:
-                edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were frozen for `{aself.time(time)}`."
-
+        string, edit_string = self.generateMessages(members, time, "frozen", "freezing")
+        msg = await ctx.send(string)
         await self.add_role(members, role, time, msg, edit_string)
 
 def setup(client):
