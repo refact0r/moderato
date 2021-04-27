@@ -1,6 +1,6 @@
 # moderato
 
-a discord bot
+a moderation discord bot
 
 ## contributing
 
