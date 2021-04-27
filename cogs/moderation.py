@@ -81,7 +81,7 @@ class moderation(commands.Cog):
         except:
             pass
             
-        if not members and parse_time:
+        if not members:
             try:
                 r = await RoleConverter().convert(ctx, args)
                 members = r.members
@@ -140,114 +140,77 @@ class moderation(commands.Cog):
 
         return list(set(members)), time
 
-    def generateMessages(self, members, time, past, current):
-        string = None
+    async def role_command(self, ctx, args, parse_time, overwrite, color, role_name, past, current):
+        if not ctx.author.guild_permissions.manage_roles:
+            await ctx.send("You do not have the permissions to use this command.")
+            return
+
+        role = None
+        for r in ctx.guild.roles:
+            if r.name == role_name.capitalize() or r.name == role_name:
+                role = r
+        if not role:
+            role = await ctx.guild.create_role(name = role_name.capitalize(), color = color)
+            for channel in ctx.guild.channels:
+                await channel.set_permissions(role, overwrite = overwrite)
+
+        members, time = await self.parse_args(ctx, args, parse_time)
+
+        if not members:
+            await ctx.send("No users found.")
+            return
+        if len(members) > 100:
+            await ctx.send(f"You cannot use this command on more than 100 users at once.")
+            return
+
+        msg = None
         edit_string = None
         if len(members) == 1:
             if time == 0:
-                string = f"`{members[0].display_name}` was {past}."
+                await ctx.send(f"`{members[0].display_name}` was {past}.")
             else:
-                string = f"`{members[0].display_name}` was {past} for `{self.time(time)}`."
+                await ctx.send(f"`{members[0].display_name}` was {past} for `{self.time(time)}`.")
         else:
-            string = f"{current.capitalize()} the users {', '.join(['`' + m.display_name + '`' for m in members])}..."
+            msg = await ctx.send(f"{current.capitalize()} the users {', '.join(['`' + m.display_name + '`' for m in members])}...")
             if time == 0:
                 edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were {past}."
             else:
                 edit_string = f"The users {', '.join(['`' + m.display_name + '`' for m in members])} were {past} for `{self.time(time)}`."
-        return string, edit_string
 
-    @commands.command(aliases = ["m"], brief = "Prevents a user from sending messages.", help = "%mute [user(s) or role(s)] (time)")
+        if parse_time:
+            await self.add_role(members, role, time, msg, edit_string)
+        else:
+            await self.remove_role(members, role, msg, edit_string)
+
+    @commands.command(aliases = ["m"], brief = "Prevents a user sending messages", help = "%mute [user(s) or role(s)] (time)")
     async def mute(self, ctx, *, args):
-        if not ctx.author.guild_permissions.manage_roles:
-            await ctx.send("You do not have the permissions to use this command.")
-            return
-
-        role = None
-        for r in ctx.guild.roles:
-            if r.name == "Muted" or r.name == "muted":
-                role = r
-        if not role:
-            role = await ctx.guild.create_role(name = "Muted", color = discord.Color(0x505050))
-            for channel in ctx.guild.channels:
-                overwrite = discord.PermissionOverwrite()
-                overwrite.send_messages = False
-                await channel.set_permissions(role, overwrite=overwrite)
-
-        members, time = await self.parse_args(ctx, args, True)
-        
-        if not members:
-            await ctx.send("No users found.")
-            return
-        if len(members) > 100:
-            await ctx.send("You cannot mute more than 100 users at once.")
-            return
-
-        string, edit_string = self.generateMessages(members, time, "muted", "muting")
-        msg = await ctx.send(string)
-        await self.add_role(members, role, time, msg, edit_string)
+        overwrite = discord.PermissionOverwrite(send_messages = False)
+        await self.role_command(ctx, args, True, overwrite, discord.Color(0x505050), "muted", "muted", "muting")
 
     @commands.command(aliases = ["um"], brief = "Unmutes a user.", help = "%unmute [user(s) or role(s)]")
     async def unmute(self, ctx, *, args):
-        if not ctx.author.guild_permissions.manage_roles:
-            await ctx.send("You do not have the permissions to use this command.")
-            return
-
-        role = None
-        for r in ctx.guild.roles:
-            if r.name == "Muted" or r.name == "muted":
-                role = r
-        if not role:
-            role = await ctx.guild.create_role(name = "Muted", color = discord.Color(0x505050))
-            for channel in ctx.guild.channels:
-                overwrite = discord.PermissionOverwrite()
-                overwrite.send_messages = False
-                await channel.set_permissions(role, overwrite=overwrite)
-
-        members, time = await self.parse_args(ctx, args, False)
-        
-        if not members:
-            await ctx.send("No users found.")
-            return
-        if len(members) > 100:
-            await ctx.send("You cannot unmute more than 100 users at once.")
-            return
-
-        string, edit_string = self.generateMessages(members, time, "unmuted", "unmuting")
-        msg = await ctx.send(string)
-        await self.remove_role(members, role, msg, edit_string)
+        overwrite = discord.PermissionOverwrite(send_messages = False)
+        await self.role_command(ctx, args, False, overwrite, discord.Color(0x505050), "muted", "unmuted", "unmuting")
 
     @commands.command(aliases = ["f"], brief = "Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help = "%freeze [user(s) or role(s)] (time)")
     async def freeze(self, ctx, *, args):
-        if not ctx.author.guild_permissions.manage_roles:
-            await ctx.send("You do not have the permissions to use this command.")
-            return
+        overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
+        await self.role_command(ctx, args, True, overwrite, discord.Color(0xb0b0b0), "frozen", "frozen", "freezing")
 
-        role = None
-        for r in ctx.guild.roles:
-            if r.name == "Frozen" or r.name == "frozen":
-                role = r
-        if not role:
-            role = await ctx.guild.create_role(name = "Frozen", color = discord.Color.default())
-            for channel in ctx.guild.channels:
-                overwrite = discord.PermissionOverwrite()
-                overwrite.external_emojis = False
-                overwrite.attach_files = False
-                overwrite.embed_links = False
-                overwrite.add_reactions = False
-                await channel.set_permissions(role, overwrite = overwrite)
+    @commands.command(aliases = ["uf"], brief = "Unfreezes a user.", help = "%unfreeze [user(s) or role(s)]")
+    async def unfreeze(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
+        await self.role_command(ctx, args, False, overwrite, discord.Color(0xb0b0b0), "frozen", "unfrozen", "unfreezing")
 
-        members, time = await self.parse_args(ctx, args, True)
-        
-        if not members:
-            await ctx.send("No users found.")
-            return
-        if len(members) > 100:
-            await ctx.send("You cannot freeze more than 100 users at once.")
-            return
+    @commands.command(aliases = ["e"], brief = "Prevents a user from viewing any channels.", help = "%exile [user(s) or role(s)] (time)")
+    async def exile(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
+        await self.role_command(ctx, args, True, overwrite, discord.Color(0x202020), "exiled", "exiled", "exiling")
 
-        string, edit_string = self.generateMessages(members, time, "frozen", "freezing")
-        msg = await ctx.send(string)
-        await self.add_role(members, role, time, msg, edit_string)
+    @commands.command(aliases = ["ue"], brief = "Unexiles a user.", help = "%unexile [user(s) or role(s)]")
+    async def unexile(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
+        await self.role_command(ctx, args, False, overwrite, discord.Color(0x202020), "exiled", "unexiled", "unexiling")
 
 def setup(client):
     client.add_cog(moderation(client))
