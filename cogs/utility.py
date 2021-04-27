@@ -22,15 +22,13 @@ class utility(commands.Cog):
         embeds.append(discord.Embed(
             title = "Help",
             description = """
-                Click the reactions to go to specific categories, or use `%help [category]`.
-                To get information about a specific command, use `%help [command]`.
-                `()` means an optional argument, `[]` means a required argument.
+                Click the reactions to go to categories, or use `%help [category]`.
             """,
             color = 0x4f85f6
         ))
-        embeds[0].set_footer(text = f"Page 1/{len(self.client.cogs) - len(cog_blacklist) + 1}")
+        embeds[0].set_footer(text = f"Page 0/{len(self.client.cogs) - len(cog_blacklist)}")
 
-        count = 2
+        count = 1
         for cog_name in cog_order:
             if cog_name not in cog_blacklist:
                 cog = self.client.cogs[cog_name]
@@ -38,13 +36,13 @@ class utility(commands.Cog):
                 embed = discord.Embed(
                     title = "Help",
                     description = """
-                        Click the reactions to go to specific categories, or use `%help [category]`.
-                        To get information about a specific command, use `%help [command]`.
-                        `()` means an optional argument, `[]` means a required argument.
+                        Click the reactions to go to categories, or use `%help [category]`.
+                        For more info about a command, use `%help [command]`.
+                        `()` means optional, `[]` means required.
                     """,
                     color = 0x4f85f6
                 )
-                embed.set_footer(text = f"Page {count}/{len(self.client.cogs) - len(cog_blacklist) + 1}")
+                embed.set_footer(text = f"Page {count}/{len(self.client.cogs) - len(cog_blacklist)}")
                 embeds.append(embed)
 
                 commands_string = ""
@@ -64,7 +62,7 @@ class utility(commands.Cog):
         def check(reaction, user):
             return reaction.message.id == msg.id and user != self.client.user
 
-        current = 1
+        current = 0
         while True:
             try:
                 reaction, user = await self.client.wait_for('reaction_add', timeout = 300.0, check = check)
