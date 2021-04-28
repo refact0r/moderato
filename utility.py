@@ -25,7 +25,7 @@ def parse_time(string):
 # convert time in seconds to readable string
 def time_string(seconds):
     period_seconds = [86400, 3600, 60, 1]
-    period_desc = ['days', 'hours', 'mins', 'secs']
+    period_desc = ['days', 'hours', 'minutes', 'seconds']
     s = ''
     remainder = seconds
     for i in range(len(period_seconds)):
