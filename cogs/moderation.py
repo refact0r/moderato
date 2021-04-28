@@ -26,7 +26,6 @@ class moderation(commands.Cog):
 
     # remove role from members
     async def remove_role(self, members, role, time):
-        print(members, role, time)
         for member in role.members:
             await member.remove_roles(role)
         if time <= 0:
