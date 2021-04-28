@@ -68,25 +68,27 @@ class moderation(commands.Cog):
             except:
                 pass
 
-        # check for role with time
-        if not parsed:
-            try:
-                r = await RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
-                roles.add(r)
-                time = parse_time(args_list[-1])
-                parsed = True
-            except:
-                pass
+        if len(args_list) > 1 and parse_time(args_list[-1]) > 0:
 
-        # check for member with time
-        if not parsed:
-            try:
-                m = await MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
-                members.add(m)
-                time = parse_time(args_list[-1])
-                parsed = True
-            except:
-                pass
+            # check for role with time
+            if not parsed:
+                try:
+                    r = await RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
+                    roles.add(r)
+                    time = parse_time(args_list[-1])
+                    parsed = True
+                except:
+                    pass
+
+            # check for member with time
+            if not parsed:
+                try:
+                    m = await MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
+                    members.add(m)
+                    time = parse_time(args_list[-1])
+                    parsed = True
+                except:
+                    pass
 
         if not parsed:
 
@@ -166,7 +168,7 @@ class moderation(commands.Cog):
                 if len(roles) == 1:
                     msg_string += f"the role `{roles[0].name}`"
                 else:
-                    msg_string += f"the roles `{', '.join([r.name for r in roles])}`"
+                    msg_string += f"the roles `{'`, `'.join([r.name for r in roles])}`"
                     plural = True
                 if members:
                     msg_string += " and "
@@ -175,9 +177,9 @@ class moderation(commands.Cog):
                 if len(members) == 1:
                     msg_string += f"the member `{members[0].name}`"
                 else:
-                    msg_string += f"the members `{', '.join([m.name for m in members])}`"
+                    msg_string += f"the members `{'`, `'.join([m.name for m in members])}`"
                     plural = True
-            msg_string = msg_string.capitalize()
+            msg_string = msg_string[0].upper() + msg_string[1:]
 
         if plural:
             msg_string += f" were {name}"
