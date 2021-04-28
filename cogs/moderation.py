@@ -191,31 +191,49 @@ class moderation(commands.Cog):
             await self.remove_role(final_members, role, time)
 
     @commands.command(aliases = ["m"], brief = "Prevents a user sending messages", help = "%mute [user(s) or role(s)] (time)")
+    @commands.has_permissions(manage_roles = True)
+    @commands.bot_has_permissions(manage_roles = True)
+    @commands.guild_only()
     async def mute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages = False)
         await self.role_command(ctx, args, True, "muted", "Muted", overwrite, discord.Color(0x505050))
 
     @commands.command(aliases = ["um"], brief = "Unmutes a user.", help = "%unmute [user(s) or role(s)]")
+    @commands.has_permissions(manage_roles = True)
+    @commands.bot_has_permissions(manage_roles = True)
+    @commands.guild_only()
     async def unmute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages = False)
         await self.role_command(ctx, args, False, "unmuted", "Muted", overwrite, discord.Color(0x505050))
 
     @commands.command(aliases = ["f"], brief = "Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help = "%freeze [user(s) or role(s)] (time)")
+    @commands.has_permissions(manage_roles = True)
+    @commands.bot_has_permissions(manage_roles = True)
+    @commands.guild_only()
     async def freeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
         await self.role_command(ctx, args, True, "frozen", "Frozen", overwrite, discord.Color(0xb0b0b0))
 
     @commands.command(aliases = ["uf"], brief = "Unfreezes a user.", help = "%unfreeze [user(s) or role(s)]")
+    @commands.has_permissions(manage_roles = True)
+    @commands.bot_has_permissions(manage_roles = True)
+    @commands.guild_only()
     async def unfreeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
         await self.role_command(ctx, args, False, "unfrozen", "Frozen", overwrite, discord.Color(0xb0b0b0))
 
     @commands.command(aliases = ["e"], brief = "Prevents a user from viewing any channels.", help = "%exile [user(s) or role(s)] (time)")
+    @commands.has_permissions(manage_roles = True)
+    @commands.bot_has_permissions(manage_roles = True)
+    @commands.guild_only()
     async def exile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
         await self.role_command(ctx, args, True, "exiled", "Exiled", overwrite, discord.Color(0x202020))
 
     @commands.command(aliases = ["ue"], brief = "Unexiles a user.", help = "%unexile [user(s) or role(s)]")
+    @commands.has_permissions(manage_roles = True)
+    @commands.bot_has_permissions(manage_roles = True)
+    @commands.guild_only()
     async def unexile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
         await self.role_command(ctx, args, False, "unexiled", "Exiled", overwrite, discord.Color(0x202020))
