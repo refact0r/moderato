@@ -134,10 +134,12 @@ class moderation(commands.Cog):
         final_members = set([])
 
         if everyone:
-            final_members.add(ctx.guild.members)
+            for m in ctx.guild.members:
+                final_members.add(m)
         else:
             for r in roles:
-                final_members.add(r.members)
+                for m in r.members:
+                    final_members.add(m)
             for m in members:
                 final_members.add(m)
 
@@ -155,32 +157,36 @@ class moderation(commands.Cog):
 
         # generate and send message
         msg_string = ""
-        if len(final_members) == 1:
-            if time != 0:
-                msg_string += f"`{members[0].name}` was {name} for `{time_string(time)}`."
-            else:
-                msg_string += f"`{members[0].name}` was {name}."
+        plural = False
+        if everyone:
+            msg_string += f"Everyone"
         else:
-            if everyone:
-                msg_string += f"Everyone"
-            else:
-                if len(roles) > 0:
-                    if len(roles) == 1:
-                        msg_string += f"the role `{roles[0].name}`"
-                    else:
-                        msg_string += f"the roles `{', '.join([r.name for r in roles])}`"
-                    if members:
-                        msg_string += " and "
-                if len(members) > 0:
-                    if len(members) == 1:
-                        msg_string += f"the member `{members[0].name}`"
-                    else:
-                        msg_string += f"the members `{', '.join([m.name for m in members])}`"
-                msg_string.capitalize()
-            if time != 0:
-                msg_string += f" were {name} for `{time_string(time)}`."
-            else:
-                msg_string += f" were {name}."
+            if len(roles) > 0:
+                if len(roles) == 1:
+                    msg_string += f"the role `{roles[0].name}`"
+                else:
+                    msg_string += f"the roles `{', '.join([r.name for r in roles])}`"
+                    plural = True
+                if members:
+                    msg_string += " and "
+                    plural = True
+            if len(members) > 0:
+                if len(members) == 1:
+                    msg_string += f"the member `{members[0].name}`"
+                else:
+                    msg_string += f"the members `{', '.join([m.name for m in members])}`"
+                    plural = True
+            msg_string = msg_string.capitalize()
+
+        if plural:
+            msg_string += f" were {name}"
+        else:
+            msg_string += f" was {name}"
+
+        if time != 0:
+            msg_string += f" for `{time_string(time)}`."
+        else:
+            msg_string += "."
         
         await ctx.send(msg_string)
 
