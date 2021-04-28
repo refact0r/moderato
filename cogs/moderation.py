@@ -21,12 +21,13 @@ class moderation(commands.Cog):
         if time <= 0:
             return
         await asyncio.sleep(time)
-        for member in members:
+        for member in role.members:
             await member.remove_roles(role)
 
     # remove role from members
     async def remove_role(self, members, role, time):
-        for member in members:
+        print(members, role, time)
+        for member in role.members:
             await member.remove_roles(role)
         if time <= 0:
             return
