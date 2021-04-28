@@ -119,9 +119,5 @@ class general(commands.Cog):
         )
         await ctx.send(embed = embed)
 
-    @commands.command()
-    async def deletetest(self, ctx):
-        await ctx.channel.purge(limit = 2)
-
 def setup(client):
     client.add_cog(general(client))

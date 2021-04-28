@@ -16,8 +16,17 @@ class error(commands.Cog):
 
         # get the original exception
         error = getattr(error, 'original', error)
+        
+        print(error)
 
         if isinstance(error, commands.CommandNotFound):
+            return
+
+        if isinstance(error, commands.NoPrivateMessage):
+            try:
+                await ctx.author.send('This command cannot be used in direct messages.')
+            except discord.Forbidden:
+                pass
             return
 
         if isinstance(error, commands.BotMissingPermissions):
@@ -50,13 +59,6 @@ class error(commands.Cog):
 
         if isinstance(error, commands.UserInputError):
             await ctx.send("Invalid input.")
-            return
-
-        if isinstance(error, commands.NoPrivateMessage):
-            try:
-                await ctx.author.send('This command cannot be used in direct messages.')
-            except discord.Forbidden:
-                pass
             return
 
         if isinstance(error, commands.CheckFailure):
