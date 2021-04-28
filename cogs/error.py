@@ -26,8 +26,8 @@ class error(commands.Cog):
                 fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
             else:
                 fmt = ' and '.join(missing)
-            _message = 'I need the **{}** permission(s) to run this command.'.format(fmt)
-            await ctx.send(_message)
+            message = 'I need the **{}** permission(s) to run this command.'.format(fmt)
+            await ctx.send(message)
             return
 
         if isinstance(error, commands.DisabledCommand):

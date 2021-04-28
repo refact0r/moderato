@@ -14,27 +14,6 @@ class moderation(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    def duration(self, duration_string):
-        duration_string = duration_string.lower()
-        total_seconds = Decimal('0')
-        prev_num = []
-        for character in duration_string:
-            if character.isalpha():
-                if prev_num:
-                    num = Decimal(''.join(prev_num))
-                    if character == 'd':
-                        total_seconds += num * 60 * 60 * 24
-                    elif character == 'h':
-                        total_seconds += num * 60 * 60
-                    elif character == 'm':
-                        total_seconds += num * 60
-                    elif character == 's':
-                        total_seconds += num
-                    prev_num = []
-            elif character.isnumeric():
-                prev_num.append(character)
-        return float(total_seconds)
-
     def time(self, seconds):
         period_seconds = [86400, 3600, 60, 1]
         period_desc = ['days', 'hours', 'mins', 'secs']
