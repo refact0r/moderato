@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import math
 from os import error
+from utility import *
 
 class error(commands.Cog):
 
@@ -16,57 +17,51 @@ class error(commands.Cog):
 
         # get the original exception
         error = getattr(error, 'original', error)
-        
-        print(error)
 
         if isinstance(error, commands.CommandNotFound):
             return
 
         if isinstance(error, commands.NoPrivateMessage):
-            try:
-                await ctx.author.send('This command cannot be used in direct messages.')
-            except discord.Forbidden:
-                pass
+            await error_message(ctx, "This command cannot be used in direct messages.")
             return
 
         if isinstance(error, commands.BotMissingPermissions):
             missing = [perm.replace('_', ' ').replace('guild', 'server').title() for perm in error.missing_perms]
-            if len(missing) > 2:
-                fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
+            if len(missing) > 1:
+                message = "I need the permissions"
             else:
-                fmt = ' and '.join(missing)
-            message = 'I need the **{}** permission(s) to run this command.'.format(fmt)
-            await ctx.send(message)
+                message = "I need the permission"
+            message += f" `{'`, `'.join(missing)}` to run this command."
+            await error_message(ctx, message)
             return
 
         if isinstance(error, commands.DisabledCommand):
-            await ctx.send('This command has been disabled.')
+            await error_message(ctx, "This command has been disabled.")
             return
 
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send("This command is on cooldown, please retry in {}s.".format(math.ceil(error.retry_after)))
+            await error_message(ctx, f"This command is on cooldown, please retry in `{math.ceil(error.retry_after)} seconds`.")
             return
 
         if isinstance(error, commands.MissingPermissions):
             missing = [perm.replace('_', ' ').replace('guild', 'server').title() for perm in error.missing_perms]
-            if len(missing) > 2:
-                fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
+            if len(missing) > 1:
+                message = "You need the permissions"
             else:
-                fmt = ' and '.join(missing)
-            _message = 'You need the **{}** permission(s) to use this command.'.format(fmt)
-            await ctx.send(_message)
+                message = "You need the permission"
+            message += f" `{'`, `'.join(missing)}` to use this command."
+            await error_message(ctx, message)
             return
 
         if isinstance(error, commands.UserInputError):
-            await ctx.send("Invalid input.")
+            await error_message(ctx, "Invalid input.")
             return
 
         if isinstance(error, commands.CheckFailure):
-            await ctx.send("You do not have permission to use this command.")
+            await error_message(ctx, "You do not have permission to use this command.")
             return
-
+        
         print(error)
     
-
 def setup(client):
     client.add_cog(error(client))
