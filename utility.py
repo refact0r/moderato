@@ -1,3 +1,4 @@
+import discord
 from decimal import Decimal
 
 # parse time in seconds from string
@@ -35,3 +36,19 @@ def time_string(seconds):
                 s += ' '
             s += f'{int(q)} {period_desc[i]}'
     return s
+
+# show message in embed
+async def embed_message(ctx, message, color):
+    embed = discord.Embed(
+        description = message,
+        color = color
+    )
+    await ctx.send(embed = embed)
+
+# show error message in embed
+async def error_message(ctx, message):
+    embed = discord.Embed(
+        description = message,
+        color = discord.Color(0xe64545)
+    )
+    await ctx.send(embed = embed)

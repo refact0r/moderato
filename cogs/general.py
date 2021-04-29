@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 import time
 import pymongo
+from utility import *
 
 cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
 db = cluster['discordbot']

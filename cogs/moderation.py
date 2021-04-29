@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import *
 import pymongo
-from utility import parse_time, time_string
+from utility import *
 
 cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
 db = cluster["discordbot"]
@@ -149,7 +149,7 @@ class moderation(commands.Cog):
         
         # checks
         if not final_members:
-            await ctx.send("No users found.")
+            await error_message(ctx, "No members found.")
             return
         '''
         if len(final_members) > 100:
@@ -190,7 +190,7 @@ class moderation(commands.Cog):
         else:
             msg_string += "."
         
-        await ctx.send(msg_string)
+        await embed_message(ctx, msg_string, role_color)
 
         # add or remove role
         if add_role:
