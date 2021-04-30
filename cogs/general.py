@@ -3,12 +3,11 @@ import discord
 from discord.ext import commands
 import time
 import pymongo
-from utility import *
-
+import utility
+    
 cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
 db = cluster['discordbot']
 
-cog_blacklist = ['error']
 cog_order = ['general', 'moderation']
 
 class general(commands.Cog):
@@ -19,74 +18,82 @@ class general(commands.Cog):
 
     @commands.command(aliases = ['h'], brief = "Shows all commands, commands in a category, or information about a command", help = "%help (category or command)")
     async def help(self, ctx, command = None):
-        embeds = []
-        embeds.append(discord.Embed(
-            title = "Help",
-            description = """
-                Click the reactions to go to categories, or use `%help [category]`.
-            """,
-            color = 0x4f85f6
-        ))
-        embeds[0].set_footer(text = f"Page 0/{len(self.client.cogs) - len(cog_blacklist)}")
+        if not command or command in [str(i + 1) for i in range(len(cog_order))]:
+            embeds = []
+            embeds.append(discord.Embed(
+                title = "Help",
+                description = """
+                    Click the reactions to go to categories, or use `%help [category]`.
+                """,
+                color = utility.help_color
+            ))
 
-        count = 1
-        for cog_name in cog_order:
-            if cog_name not in cog_blacklist:
+            count = 1
+            for cog_name in cog_order:
                 cog = self.client.cogs[cog_name]
 
-                embed = discord.Embed(
-                    title = "Help",
-                    description = """
-                        Click the reactions to go to categories, or use `%help [category]`.
-                        For more info about a command, use `%help [command]`.
-                        `()` means optional, `[]` means required.
-                    """,
-                    color = 0x4f85f6
-                )
-                embed.set_footer(text = f"Page {count}/{len(self.client.cogs) - len(cog_blacklist)}")
-                embeds.append(embed)
+                if cog:
+                    embed = discord.Embed(
+                        title = "Help",
+                        description = """
+                            Click the reactions to go to categories, or use `%help [category]`.
+                            For more info about a command, use `%help [command]`.
+                            `()` means optional, `[]` means required.
+                        """,
+                        color = utility.help_color
+                    )
+                    embed.set_footer(text = f"Page {count}/{len(cog_order)}")
+                    embeds.append(embed)
 
-                commands_string = ""
-                for command in cog.get_commands():
-                    if command.help and command.brief:
-                        commands_string += f"```{command.help}```{command.brief}"
-                
-                embed.add_field(name = cog_name.capitalize(), value = commands_string, inline = False)
-                embeds[0].add_field(name = f"Page {count} - {cog_name.capitalize()}", value = cog.description, inline = False)
+                    commands_string = ""
+                    for c in cog.get_commands():
+                        if c.help and c.brief:
+                            commands_string += f"```{c.help}```{c.brief}"
+                    
+                    embed.add_field(name = cog_name.capitalize(), value = commands_string, inline = False)
+                    embeds[0].add_field(name = f"Page {count} - {cog_name.capitalize()}", value = cog.description, inline = False)
 
-                count += 1
+                    count += 1
 
-        msg = await ctx.send(embed = embeds[0])
-        await msg.add_reaction('◀️')
-        await msg.add_reaction('▶️')
+            current = 0
+            if command:
+                current = int(command)
 
-        def check(reaction, user):
-            return reaction.message.id == msg.id and user != self.client.user
+            msg = await ctx.send(embed = embeds[current])
+            await msg.add_reaction('◀️')
+            await msg.add_reaction('▶️')
 
-        current = 0
-        while True:
-            try:
-                reaction, user = await self.client.wait_for('reaction_add', timeout = 300.0, check = check)
-            except asyncio.TimeoutError:
-                return
+            def check(reaction, user):
+                return reaction.message.id == msg.id and user != self.client.user
 
-            try:
-                await reaction.remove(user)
-            except:
-                pass
+            while True:
+                try:
+                    reaction, user = await self.client.wait_for('reaction_add', timeout = 300.0, check = check)
+                except asyncio.TimeoutError:
+                    await msg.edit(embed = discord.Embed(
+                        description = "Command timed out.",
+                        color = utility.help_color
+                    ))
+                    await msg.clear_reactions()
+                    return
 
-            if reaction.emoji == '◀️':
-                if current == 1:
-                    current = len(embeds)
-                else:
-                    current -= 1
-            elif reaction.emoji == '▶️':
-                if current == len(embeds):
-                    current = 1
-                else:
-                    current += 1
+                try:
+                    await reaction.remove(user)
+                except:
+                    pass
 
-            await msg.edit(embed = embeds[current - 1])
+                if reaction.emoji == '◀️':
+                    if current == 0:
+                        current = len(embeds) - 1
+                    else:
+                        current -= 1
+                elif reaction.emoji == '▶️':
+                    if current == len(embeds) - 1:
+                        current = 0
+                    else:
+                        current += 1
+
+                await msg.edit(embed = embeds[current])
 
     @commands.command(brief = "Says hello back.", help = "%hi")
     async def hi(self, ctx):
@@ -98,9 +105,10 @@ class general(commands.Cog):
         collection = db['ping']
 
         before = time.monotonic()
-        message = await ctx.send("Pong!")
+        embed, message = await utility.embed_message(ctx, "Pong!", utility.ping_color)
         ping = int((time.monotonic() - before) * 1000)
-        await message.edit(content = f"Pong! `{ping}ms`")
+        embed.description = f"Pong! `{ping}ms`"
+        await message.edit(embed = embed)
 
         if ping < collection.find_one({'_id': 0})['time']:
             collection.update_one({'_id': 0}, {'$set': {'time': ping, 'name': ctx.author.name}})
@@ -116,7 +124,7 @@ class general(commands.Cog):
         embed = discord.Embed(
             title = "Ping Leaderboard",
             description = f"Fastest: `{fastest['time']}` ms by {fastest['name']}\nSlowest: `{slowest['time']}` ms by {slowest['name']}",
-            color = ctx.author.color
+            color = utility.ping_color
         )
         await ctx.send(embed = embed)
 

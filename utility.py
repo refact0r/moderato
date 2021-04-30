@@ -1,6 +1,13 @@
 import discord
 from decimal import Decimal
 
+error_color = 0xe65c5c
+help_color = 0x5ce65c
+muted_color = 0x505050
+frozen_color = 0xb0b0b0
+exiled_color = 0x202020
+ping_color = 0x5cbae6
+
 # parse time in seconds from string
 def parse_time(string):
     string = string.lower()
@@ -43,12 +50,12 @@ async def embed_message(ctx, message, color):
         description = message,
         color = color
     )
-    await ctx.send(embed = embed)
+    return embed, await ctx.send(embed = embed)
 
 # show error message in embed
 async def error_message(ctx, message):
     embed = discord.Embed(
         description = message,
-        color = discord.Color(0xe64545)
+        color = error_color
     )
-    await ctx.send(embed = embed)
+    return embed, await ctx.send(embed = embed)

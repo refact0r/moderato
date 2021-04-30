@@ -1,9 +1,8 @@
 import asyncio
 import discord
 from discord.ext import commands
-from discord.ext.commands import *
 import pymongo
-from utility import *
+import utility
 
 cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
 db = cluster["discordbot"]
@@ -48,11 +47,11 @@ class moderation(commands.Cog):
             everyone = True
             parsed = True
             if len(args_list) > 1:
-                time = parse_time(args_list[-1])
+                time = utility.parse_time(args_list[-1])
 
         # check for role
         try:
-            r = await RoleConverter().convert(ctx, args)
+            r = await commands.RoleConverter().convert(ctx, args)
             roles.add(r)
             parsed = True
         except:
@@ -61,20 +60,20 @@ class moderation(commands.Cog):
         # check for member
         if not parsed:
             try:
-                m = await MemberConverter().convert(ctx, args)
+                m = await commands.MemberConverter().convert(ctx, args)
                 members.add(m)
                 parsed = True
             except:
                 pass
 
-        if len(args_list) > 1 and parse_time(args_list[-1]) > 0:
+        if len(args_list) > 1 and utility.parse_time(args_list[-1]) > 0:
 
             # check for role with time
             if not parsed:
                 try:
-                    r = await RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
+                    r = await commands.RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
                     roles.add(r)
-                    time = parse_time(args_list[-1])
+                    time = utility.parse_time(args_list[-1])
                     parsed = True
                 except:
                     pass
@@ -82,9 +81,9 @@ class moderation(commands.Cog):
             # check for member with time
             if not parsed:
                 try:
-                    m = await MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
+                    m = await commands.MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
                     members.add(m)
-                    time = parse_time(args_list[-1])
+                    time = utility.parse_time(args_list[-1])
                     parsed = True
                 except:
                     pass
@@ -94,18 +93,18 @@ class moderation(commands.Cog):
             # check for individual members and role names
             for i in args_list:
                 if i == args_list[-1]:
-                    time = parse_time(i)
+                    time = utility.parse_time(i)
                     if time > 0:
                         continue
 
                 try:
-                    r = await RoleConverter().convert(ctx, i)
+                    r = await commands.RoleConverter().convert(ctx, i)
                     roles.add(r)
                 except:
                     pass
 
                 try:
-                    m = await MemberConverter().convert(ctx, i)
+                    m = await commands.MemberConverter().convert(ctx, i)
                     members.add(m)
                 except:
                     pass
@@ -149,7 +148,7 @@ class moderation(commands.Cog):
         
         # checks
         if not final_members:
-            await error_message(ctx, "No members found.")
+            await utility.error_message(ctx, "No members found.")
             return
         '''
         if len(final_members) > 100:
@@ -186,11 +185,11 @@ class moderation(commands.Cog):
             msg_string += f" was {name}"
 
         if time != 0:
-            msg_string += f" for `{time_string(time)}`."
+            msg_string += f" for `{utility.time_string(time)}`."
         else:
             msg_string += "."
         
-        await embed_message(ctx, msg_string, role_color)
+        await utility.embed_message(ctx, msg_string, role_color)
 
         # add or remove role
         if add_role:
@@ -204,7 +203,7 @@ class moderation(commands.Cog):
     @commands.guild_only()
     async def mute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages = False)
-        await self.role_command(ctx, args, True, "muted", "Muted", overwrite, discord.Color(0x505050))
+        await self.role_command(ctx, args, True, "muted", "Muted", overwrite, utility.muted_color)
 
     @commands.command(aliases = ["um"], brief = "Unmutes a user.", help = "%unmute [user(s) or role(s)]")
     @commands.has_permissions(manage_roles = True)
@@ -212,7 +211,7 @@ class moderation(commands.Cog):
     @commands.guild_only()
     async def unmute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages = False)
-        await self.role_command(ctx, args, False, "unmuted", "Muted", overwrite, discord.Color(0x505050))
+        await self.role_command(ctx, args, False, "unmuted", "Muted", overwrite, utility.muted_color)
 
     @commands.command(aliases = ["f"], brief = "Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help = "%freeze [user(s) or role(s)] (time)")
     @commands.has_permissions(manage_roles = True)
@@ -220,7 +219,7 @@ class moderation(commands.Cog):
     @commands.guild_only()
     async def freeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
-        await self.role_command(ctx, args, True, "frozen", "Frozen", overwrite, discord.Color(0xb0b0b0))
+        await self.role_command(ctx, args, True, "frozen", "Frozen", overwrite, utility.frozen_color)
 
     @commands.command(aliases = ["uf"], brief = "Unfreezes a user.", help = "%unfreeze [user(s) or role(s)]")
     @commands.has_permissions(manage_roles = True)
@@ -228,7 +227,7 @@ class moderation(commands.Cog):
     @commands.guild_only()
     async def unfreeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
-        await self.role_command(ctx, args, False, "unfrozen", "Frozen", overwrite, discord.Color(0xb0b0b0))
+        await self.role_command(ctx, args, False, "unfrozen", "Frozen", overwrite, utility.frozen_color)
 
     @commands.command(aliases = ["e"], brief = "Prevents a user from viewing any channels.", help = "%exile [user(s) or role(s)] (time)")
     @commands.has_permissions(manage_roles = True)
@@ -236,7 +235,7 @@ class moderation(commands.Cog):
     @commands.guild_only()
     async def exile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
-        await self.role_command(ctx, args, True, "exiled", "Exiled", overwrite, discord.Color(0x202020))
+        await self.role_command(ctx, args, True, "exiled", "Exiled", overwrite, utility.exiled_color)
 
     @commands.command(aliases = ["ue"], brief = "Unexiles a user.", help = "%unexile [user(s) or role(s)]")
     @commands.has_permissions(manage_roles = True)
@@ -244,7 +243,7 @@ class moderation(commands.Cog):
     @commands.guild_only()
     async def unexile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
-        await self.role_command(ctx, args, False, "unexiled", "Exiled", overwrite, discord.Color(0x202020))
+        await self.role_command(ctx, args, False, "unexiled", "Exiled", overwrite, utility.exiled_color)
 
 def setup(client):
     client.add_cog(moderation(client))
