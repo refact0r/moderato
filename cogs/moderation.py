@@ -3,8 +3,9 @@ import discord
 from discord.ext import commands
 import pymongo
 import utility
+import os
 
-cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
+cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
 db = cluster["discordbot"]
 
 class moderation(commands.Cog):
