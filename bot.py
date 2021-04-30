@@ -2,7 +2,7 @@ import discord
 import os
 from discord.ext import commands
 
-bot_token = ""
+bot_token = os.getenv('BOT_TOKEN')
 
 intents = discord.Intents.default()
 intents.members = True

@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import math
 from os import error
-from utility import *
+import utility
 
 class error(commands.Cog):
 
@@ -22,7 +22,7 @@ class error(commands.Cog):
             return
 
         if isinstance(error, commands.NoPrivateMessage):
-            await error_message(ctx, "This command cannot be used in direct messages.")
+            await utility.error_message(ctx, "This command cannot be used in direct messages.")
             return
 
         if isinstance(error, commands.BotMissingPermissions):
@@ -32,15 +32,15 @@ class error(commands.Cog):
             else:
                 message = "I need the permission"
             message += f" `{'`, `'.join(missing)}` to run this command."
-            await error_message(ctx, message)
+            await utility.error_message(ctx, message)
             return
 
         if isinstance(error, commands.DisabledCommand):
-            await error_message(ctx, "This command has been disabled.")
+            await utility.error_message(ctx, "This command has been disabled.")
             return
 
         if isinstance(error, commands.CommandOnCooldown):
-            await error_message(ctx, f"This command is on cooldown, please retry in `{math.ceil(error.retry_after)} seconds`.")
+            await utility.error_message(ctx, f"This command is on cooldown, please retry in `{math.ceil(error.retry_after)} seconds`.")
             return
 
         if isinstance(error, commands.MissingPermissions):
@@ -50,15 +50,15 @@ class error(commands.Cog):
             else:
                 message = "You need the permission"
             message += f" `{'`, `'.join(missing)}` to use this command."
-            await error_message(ctx, message)
+            await utility.error_message(ctx, message)
             return
 
         if isinstance(error, commands.UserInputError):
-            await error_message(ctx, "Invalid input.")
+            await utility.error_message(ctx, "Invalid input.")
             return
 
         if isinstance(error, commands.CheckFailure):
-            await error_message(ctx, "You do not have permission to use this command.")
+            await utility.error_message(ctx, "You do not have permission to use this command.")
             return
         
         print(error)
