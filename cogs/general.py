@@ -4,8 +4,9 @@ from discord.ext import commands
 import time
 import pymongo
 import utility
-    
-cluster = pymongo.MongoClient("mongodb+srv://test:gSfnRVdfJgDq35fr@cluster0.8ot2g.mongodb.net/discordbot?retryWrites=true&w=majority")
+import os
+
+cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
 db = cluster['discordbot']
 
 cog_order = ['general', 'moderation']
