@@ -3,7 +3,8 @@ import discord
 from discord.ext import commands
 import time
 import pymongo
-import utility
+import utils.colors
+import utils.utility
 import os
 
 cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
@@ -26,7 +27,7 @@ class general(commands.Cog):
                 description = """
                     Click the reactions to go to categories, or use `%help [category]`.
                 """,
-                color = utility.help_color
+                color = utils.colors.help_color
             ))
 
             count = 1
@@ -41,7 +42,7 @@ class general(commands.Cog):
                             For more info about a command, use `%help [command]`.
                             `()` means optional, `[]` means required.
                         """,
-                        color = utility.help_color
+                        color = utils.colors.help_color
                     )
                     embed.set_footer(text = f"Page {count}/{len(cog_order)}")
                     embeds.append(embed)
@@ -73,7 +74,7 @@ class general(commands.Cog):
                 except asyncio.TimeoutError:
                     await msg.edit(embed = discord.Embed(
                         description = "Command timed out.",
-                        color = utility.help_color
+                        color = utils.colors.help_color
                     ))
                     await msg.clear_reactions()
                     return
@@ -106,7 +107,7 @@ class general(commands.Cog):
         collection = db['ping']
 
         before = time.monotonic()
-        embed, message = await utility.embed_message(ctx, "Pong!", utility.ping_color)
+        embed, message = await utils.utility.embed_message(ctx, "Pong!", utils.colors.ping_color)
         ping = int((time.monotonic() - before) * 1000)
         embed.description = f"Pong! `{ping}ms`"
         await message.edit(embed = embed)
@@ -125,7 +126,7 @@ class general(commands.Cog):
         embed = discord.Embed(
             title = "Ping Leaderboard",
             description = f"Fastest: `{fastest['time']}` ms by {fastest['name']}\nSlowest: `{slowest['time']}` ms by {slowest['name']}",
-            color = utility.ping_color
+            color = utils.colors.ping_color
         )
         await ctx.send(embed = embed)
 

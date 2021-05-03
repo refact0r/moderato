@@ -1,12 +1,6 @@
 import discord
 from decimal import Decimal
-
-error_color = 0xe65c5c
-help_color = 0x5ce65c
-muted_color = 0x505050
-frozen_color = 0xb0b0b0
-exiled_color = 0x202020
-ping_color = 0x5cbae6
+import utils.colors
 
 # parse time in seconds from string
 def parse_time(string):
@@ -42,6 +36,8 @@ def time_string(seconds):
             if s:
                 s += ' '
             s += f'{int(q)} {period_desc[i]}'
+            if q == 1:
+                s = s[:-1]
     return s
 
 # show message in embed
@@ -56,6 +52,6 @@ async def embed_message(ctx, message, color):
 async def error_message(ctx, message):
     embed = discord.Embed(
         description = message,
-        color = error_color
+        color = utils.colors.error_color
     )
     return embed, await ctx.send(embed = embed)

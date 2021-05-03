@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 import math
 from os import error
-import utility
+import utils.colors
+import utils.utility
 
 class error(commands.Cog):
 
@@ -21,8 +22,20 @@ class error(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             return
 
+        if isinstance(error, commands.UserInputError):
+            await utils.utility.error_message(ctx, "Invalid input.")
+            return
+
+        if isinstance(error, commands.CommandOnCooldown):
+            await utils.utility.error_message(ctx, f"This command is on cooldown, please retry in `{math.ceil(error.retry_after)} seconds`.")
+            return
+
         if isinstance(error, commands.NoPrivateMessage):
-            await utility.error_message(ctx, "This command cannot be used in direct messages.")
+            await utils.utility.error_message(ctx, "This command cannot be used in direct messages.")
+            return
+
+        if isinstance(error, commands.DisabledCommand):
+            await utils.utility.error_message(ctx, "This command has been disabled.")
             return
 
         if isinstance(error, commands.BotMissingPermissions):
@@ -32,15 +45,7 @@ class error(commands.Cog):
             else:
                 message = "I need the permission"
             message += f" `{'`, `'.join(missing)}` to run this command."
-            await utility.error_message(ctx, message)
-            return
-
-        if isinstance(error, commands.DisabledCommand):
-            await utility.error_message(ctx, "This command has been disabled.")
-            return
-
-        if isinstance(error, commands.CommandOnCooldown):
-            await utility.error_message(ctx, f"This command is on cooldown, please retry in `{math.ceil(error.retry_after)} seconds`.")
+            await utils.utility.error_message(ctx, message)
             return
 
         if isinstance(error, commands.MissingPermissions):
@@ -50,16 +55,15 @@ class error(commands.Cog):
             else:
                 message = "You need the permission"
             message += f" `{'`, `'.join(missing)}` to use this command."
-            await utility.error_message(ctx, message)
-            return
-
-        if isinstance(error, commands.UserInputError):
-            await utility.error_message(ctx, "Invalid input.")
+            await utils.utility.error_message(ctx, message)
             return
 
         if isinstance(error, commands.CheckFailure):
-            await utility.error_message(ctx, "You do not have permission to use this command.")
+            await utils.utility.error_message(ctx, "You do not have permission to use this command.")
             return
+        
+        if isinstance(error, discord.Forbidden):
+            await utils.utility.error_message(ctx, "I do not have permission to run this command.")
         
         print(error)
     
