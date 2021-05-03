@@ -2,3 +2,4 @@ database.py
 bot2.py
 test.py
 **/__pycache__
+.env

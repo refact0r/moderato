@@ -2,7 +2,8 @@ import asyncio
 import discord
 from discord.ext import commands
 import pymongo
-import utility
+import utils.colors
+import utils.utility
 import os
 
 cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
@@ -13,151 +14,9 @@ class moderation(commands.Cog):
     
     def __init__(self, client):
         self.client = client
-
-    # add role to members
-    async def add_role(self, members, role, time):
-        for member in members:
-            await member.add_roles(role)
-        if time <= 0:
-            return
-        await asyncio.sleep(time)
-        for member in role.members:
-            await member.remove_roles(role)
-
-    # remove role from members
-    async def remove_role(self, members, role, time):
-        for member in role.members:
-            await member.remove_roles(role)
-        if time <= 0:
-            return
-        await asyncio.sleep(time)
-        for member in members:
-            await member.add_roles(role)
-
-    # parses members from args
-    async def parse_members(self, ctx, args):
-        args_list = args.split(' ')
-        parsed = False
-        everyone = False
-        members = set([])
-        roles = set([])
-        time = 0
-
-        # check for "all" and @everyone
-        if "all" in args_list or "everyone" in args_list or ctx.message.mention_everyone:
-            everyone = True
-            parsed = True
-            if len(args_list) > 1:
-                time = utility.parse_time(args_list[-1])
-
-        # check for role
-        try:
-            r = await commands.RoleConverter().convert(ctx, args)
-            roles.add(r)
-            parsed = True
-        except:
-            pass
-
-        # check for member
-        if not parsed:
-            try:
-                m = await commands.MemberConverter().convert(ctx, args)
-                members.add(m)
-                parsed = True
-            except:
-                pass
-
-        if len(args_list) > 1 and utility.parse_time(args_list[-1]) > 0:
-
-            # check for role with time
-            if not parsed:
-                try:
-                    r = await commands.RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
-                    roles.add(r)
-                    time = utility.parse_time(args_list[-1])
-                    parsed = True
-                except:
-                    pass
-
-            # check for member with time
-            if not parsed:
-                try:
-                    m = await commands.MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
-                    members.add(m)
-                    time = utility.parse_time(args_list[-1])
-                    parsed = True
-                except:
-                    pass
-
-        if not parsed:
-
-            # check for individual members and role names
-            for i in args_list:
-                if i == args_list[-1]:
-                    time = utility.parse_time(i)
-                    if time > 0:
-                        continue
-
-                try:
-                    r = await commands.RoleConverter().convert(ctx, i)
-                    roles.add(r)
-                except:
-                    pass
-
-                try:
-                    m = await commands.MemberConverter().convert(ctx, i)
-                    members.add(m)
-                except:
-                    pass
-            
-            # check for mentions
-            for r in ctx.message.role_mentions:
-                r.add(r)
-            for m in ctx.message.mentions:
-                members.add(m)
-
-        return everyone, list(roles), list(members), time
-
-    # basic role moderation command
-    async def role_command(self, ctx, args, add_role, name, role_name, role_overwrite, role_color):
-
-        # find role or create if it doesnt exist
-        role = None
-        for r in ctx.guild.roles:
-            if r.name == role_name.capitalize() or r.name == role_name:
-                role = r
-        if not role:
-            role = await ctx.guild.create_role(name = role_name.capitalize(), color = role_color)
-            for c in ctx.guild.channels:
-                await c.set_permissions(role, overwrite = role_overwrite)
-
-        # get final list of members
-        everyone, roles, members, time = await self.parse_members(ctx, args)
-        final_members = set([])
-
-        if everyone:
-            for m in ctx.guild.members:
-                final_members.add(m)
-        else:
-            for r in roles:
-                for m in r.members:
-                    final_members.add(m)
-            for m in members:
-                final_members.add(m)
-
-        final_members = list(final_members)
-        
-        # checks
-        if not final_members:
-            await utility.error_message(ctx, "No members found.")
-            return
-        '''
-        if len(final_members) > 100:
-            await ctx.send(f"You cannot use this command on more than 100 users at once.")
-            return
-        '''
-
-        # generate and send message
+    
+    # generate message string
+    def generate_message(self, everyone, roles, members, time, name):
         msg_string = ""
         plural = False
         if everyone:
@@ -186,11 +45,158 @@ class moderation(commands.Cog):
             msg_string += f" was {name}"
 
         if time != 0:
-            msg_string += f" for `{utility.time_string(time)}`."
+            msg_string += f" for `{utils.utility.time_string(time)}`."
         else:
             msg_string += "."
+
+        return msg_string
+
+    # add role to members
+    async def add_role(self, members, role, time):
+        for m in members:
+            await m.add_roles(role)
+        if time <= 0:
+            return
+        await asyncio.sleep(time)
+        for m in role.members:
+            await m.remove_roles(role)
+
+    # remove role from members
+    async def remove_role(self, members, role, time):
+        for m in role.members:
+            await m.remove_roles(role)
+        if time <= 0:
+            return
+        await asyncio.sleep(time)
+        for m in members:
+            await m.add_roles(role)
+
+    # parses members from args
+    async def parse_members(self, ctx, args):
+        args_list = args.split(' ')
+        parsed = False
+        everyone = False
+        members = set([])
+        roles = set([])
+        time = 0
+
+        # check for "all" and @everyone
+        if "all" in args_list or "everyone" in args_list or ctx.message.mention_everyone:
+            everyone = True
+            parsed = True
+            if len(args_list) > 1:
+                time = utils.utility.parse_time(args_list[-1])
+
+        # check for role
+        try:
+            r = await commands.RoleConverter().convert(ctx, args)
+            roles.add(r)
+            parsed = True
+        except:
+            pass
+
+        # check for member
+        if not parsed:
+            try:
+                m = await commands.MemberConverter().convert(ctx, args)
+                members.add(m)
+                parsed = True
+            except:
+                pass
+
+        if len(args_list) > 1 and utils.utility.parse_time(args_list[-1]) > 0:
+
+            # check for role with time
+            if not parsed:
+                try:
+                    r = await commands.RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
+                    roles.add(r)
+                    time = utils.utility.parse_time(args_list[-1])
+                    parsed = True
+                except:
+                    pass
+
+            # check for member with time
+            if not parsed:
+                try:
+                    m = await commands.MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
+                    members.add(m)
+                    time = utils.utility.parse_time(args_list[-1])
+                    parsed = True
+                except:
+                    pass
+
+        if not parsed:
+
+            # check for individual members and role names
+            for i in args_list:
+                if i == args_list[-1]:
+                    time = utils.utility.parse_time(i)
+                    if time > 0:
+                        continue
+
+                try:
+                    r = await commands.RoleConverter().convert(ctx, i)
+                    roles.add(r)
+                except:
+                    pass
+
+                try:
+                    m = await commands.MemberConverter().convert(ctx, i)
+                    members.add(m)
+                except:
+                    pass
+            
+            # check for mentions
+            for r in ctx.message.role_mentions:
+                r.add(r)
+            for m in ctx.message.mentions:
+                members.add(m)
+            
+        final_members = set([])
+        roles, members = list(roles), list(members)
+
+        if everyone:
+            for m in ctx.guild.members:
+                final_members.add(m)
+        else:
+            for r in roles:
+                for m in r.members:
+                    final_members.add(m)
+            for m in members:
+                final_members.add(m)
+
+        return everyone, roles, members, final_members, time
+
+    # basic role moderation command
+    async def role_command(self, ctx, args, add_role, name, role_name, role_overwrite, role_color):
+
+        # find role or create if it doesnt exist
+        role = None
+        for r in ctx.guild.roles:
+            if r.name == role_name.capitalize() or r.name == role_name:
+                role = r
+        if not role:
+            role = await ctx.guild.create_role(name = role_name.capitalize(), color = role_color)
+            for c in ctx.guild.channels:
+                await c.set_permissions(role, overwrite = role_overwrite)
+
+        # get final list of members
+        everyone, roles, members, final_members, time = await self.parse_members(ctx, args)
         
-        await utility.embed_message(ctx, msg_string, role_color)
+        # checks
+        if not final_members:
+            await utils.utility.error_message(ctx, "No members found.")
+            return
+        '''
+        if len(final_members) > 100:
+            await ctx.send(f"You cannot use this command on more than 100 users at once.")
+            return
+        '''
+
+        # generate and send message
+        msg_string = self.generate_message(everyone, roles, members, time, name)
+        await utils.utility.embed_message(ctx, msg_string, role_color)
 
         # add or remove role
         if add_role:
@@ -198,53 +204,97 @@ class moderation(commands.Cog):
         else:
             await self.remove_role(final_members, role, time)
 
-    @commands.command(aliases = ["m"], brief = "Prevents a user sending messages", help = "%mute [user(s) or role(s)] (time)")
+    @commands.command(aliases = ["m"], brief = "Prevents a user sending messages", help = "%mute [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles = True)
     @commands.bot_has_permissions(manage_roles = True)
     @commands.guild_only()
     async def mute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages = False)
-        await self.role_command(ctx, args, True, "muted", "Muted", overwrite, utility.muted_color)
+        await self.role_command(ctx, args, True, "muted", "Muted", overwrite, utils.colors.muted_color)
 
-    @commands.command(aliases = ["um"], brief = "Unmutes a user.", help = "%unmute [user(s) or role(s)]")
+    @commands.command(aliases = ["um"], brief = "Unmutes a user.", help = "%unmute [user(s) or role(s) or all]")
     @commands.has_permissions(manage_roles = True)
     @commands.bot_has_permissions(manage_roles = True)
     @commands.guild_only()
     async def unmute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages = False)
-        await self.role_command(ctx, args, False, "unmuted", "Muted", overwrite, utility.muted_color)
+        await self.role_command(ctx, args, False, "unmuted", "Muted", overwrite, utils.colors.muted_color)
 
-    @commands.command(aliases = ["f"], brief = "Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help = "%freeze [user(s) or role(s)] (time)")
+    @commands.command(aliases = ["f"], brief = "Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help = "%freeze [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles = True)
     @commands.bot_has_permissions(manage_roles = True)
     @commands.guild_only()
     async def freeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
-        await self.role_command(ctx, args, True, "frozen", "Frozen", overwrite, utility.frozen_color)
+        await self.role_command(ctx, args, True, "frozen", "Frozen", overwrite, utils.colors.frozen_color)
 
-    @commands.command(aliases = ["uf"], brief = "Unfreezes a user.", help = "%unfreeze [user(s) or role(s)]")
+    @commands.command(aliases = ["uf"], brief = "Unfreezes a user.", help = "%unfreeze [user(s) or role(s) or all]")
     @commands.has_permissions(manage_roles = True)
     @commands.bot_has_permissions(manage_roles = True)
     @commands.guild_only()
     async def unfreeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(add_reactions = False, attach_files = False, embed_links = False, external_emojis = False)
-        await self.role_command(ctx, args, False, "unfrozen", "Frozen", overwrite, utility.frozen_color)
+        await self.role_command(ctx, args, False, "unfrozen", "Frozen", overwrite, utils.colors.frozen_color)
 
-    @commands.command(aliases = ["e"], brief = "Prevents a user from viewing any channels.", help = "%exile [user(s) or role(s)] (time)")
+    @commands.command(aliases = ["e"], brief = "Prevents a user from viewing any channels.", help = "%exile [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles = True)
     @commands.bot_has_permissions(manage_roles = True)
     @commands.guild_only()
     async def exile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
-        await self.role_command(ctx, args, True, "exiled", "Exiled", overwrite, utility.exiled_color)
+        await self.role_command(ctx, args, True, "exiled", "Exiled", overwrite, utils.colors.exiled_color)
 
-    @commands.command(aliases = ["ue"], brief = "Unexiles a user.", help = "%unexile [user(s) or role(s)]")
+    @commands.command(aliases = ["ue"], brief = "Unexiles a user.", help = "%unexile [user(s) or role(s) or all]")
     @commands.has_permissions(manage_roles = True)
     @commands.bot_has_permissions(manage_roles = True)
     @commands.guild_only()
     async def unexile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(view_channel = False, read_message_history = False)
-        await self.role_command(ctx, args, False, "unexiled", "Exiled", overwrite, utility.exiled_color)
+        await self.role_command(ctx, args, False, "unexiled", "Exiled", overwrite, utils.colors.exiled_color)
+
+    @commands.command(aliases = ["b"], brief = "Bans a user.", help = "%ban [user(s) or role(s) or all] (time)")
+    @commands.has_permissions(ban_members = True)
+    @commands.bot_has_permissions(ban_members = True)
+    @commands.guild_only()
+    async def ban(self, ctx, *, args):
+        everyone, roles, members, final_members, time = await self.parse_members(ctx, args)
+
+        if not final_members:
+            await utils.utility.error_message(ctx, "No members found.")
+            return
+
+        msg_string = self.generate_message(everyone, roles, members, time, "banned")
+        await utils.utility.embed_message(ctx, msg_string, utils.colors.ban_color)
+
+        for m in final_members:
+            await m.ban()
+        if time <= 0:
+            return
+        await asyncio.sleep(time)
+        for m in members:
+            await m.unban()
+
+    @commands.command(aliases = ["ub"], brief = "Unbans a user.", help = "%unban [user(s) or role(s) or all] (time)")
+    @commands.has_permissions(ban_members = True)
+    @commands.bot_has_permissions(ban_members = True)
+    @commands.guild_only()
+    async def unban(self, ctx, *, args):
+        everyone, roles, members, final_members, time = await self.parse_members(ctx, args)
+
+        if not final_members:
+            await utils.utility.error_message(ctx, "No members found.")
+            return
+
+        msg_string = self.generate_message(everyone, roles, members, time, "unbanned")
+        await utils.utility.embed_message(ctx, msg_string, utils.colors.ban_color)
+
+        for m in final_members:
+            await m.unban()
+        if time <= 0:
+            return
+        await asyncio.sleep(time)
+        for m in members:
+            await m.ban()
 
 def setup(client):
     client.add_cog(moderation(client))
