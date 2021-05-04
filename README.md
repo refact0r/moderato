@@ -5,7 +5,7 @@ a moderation discord bot
 ## contributing
 
 1. fork this repository or download it
-2. go to https://discord.com/developers/applications and create a new application
+2. go to <https://discord.com/developers/applications> and create a new application
 3. go to the Bot page and copy the token
 4. paste the token inside the quotes `token = ""` in the `bot.py` file from this repository
 5. run `bot.py`, it should say `bot has connected to discord` in your terminal

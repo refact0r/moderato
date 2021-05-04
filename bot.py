@@ -23,7 +23,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if client.user.mentioned_in(message):
+    if client.user in message.mentions:
         await message.channel.send(f"The current prefix is `{prefixes[0]}`.\nType `{prefixes[0]}help` for more info.")
     await client.process_commands(message)
 
