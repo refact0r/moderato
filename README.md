@@ -13,4 +13,4 @@ a moderation discord bot
 7. scroll down to the OAuth2 URL Generator and check the box that says bot inside the scopes box
 8. then in the bot permissions box and check permissions that you want the bot to have
 9. copy the link in the scopes box, visit it, and complete all the normal stuff for inviting bots
-10. hopefully it worked
+10. hopefully the bot should be online and commands that don't require a database will work
