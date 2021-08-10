@@ -1,5 +1,5 @@
 discord
 discord.py
 requests
-pymongo
 dnspython
+pymongo
