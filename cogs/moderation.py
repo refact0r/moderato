@@ -89,21 +89,21 @@ class moderation(commands.Cog):
             pass
 
         # check for member
-        if not parsed:
-            try:
-                m = await commands.MemberConverter().convert(ctx, args)
-                members.add(m)
-                parsed = True
-            except:
-                pass
-
-        # check for role
         try:
-            r = await commands.RoleConverter().convert(ctx, args)
-            roles.add(r)
+            m = await commands.MemberConverter().convert(ctx, args)
+            members.add(m)
             parsed = True
         except:
             pass
+
+        # check for role
+        if not parsed:
+            try:
+                r = await commands.RoleConverter().convert(ctx, args)
+                roles.add(r)
+                parsed = True
+            except:
+                pass
 
         if len(args_list) > 1 and utils.utility.parse_time(args_list[-1]) > 0:
 
