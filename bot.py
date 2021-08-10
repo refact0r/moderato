@@ -8,7 +8,7 @@ intents = discord.Intents.default()
 intents.members = True
 intents.presences = True
 
-prefixes = ['%']
+prefixes = [os.getenv('DEFAULT_PREFIX')]
 client = commands.Bot(command_prefix = prefixes, intents = intents)
 client.remove_command('help')
 
@@ -28,3 +28,4 @@ async def on_message(message):
     await client.process_commands(message)
 
 client.run(bot_token)
+	

@@ -72,7 +72,7 @@ class moderation(commands.Cog):
             await m.add_roles(role)
 
     # parses members from args
-    async def parse_members(self, ctx, args):
+    async def parse_args(self, ctx, args):
         args_list = args.split(' ')
         parsed = False
         everyone = False
@@ -86,13 +86,6 @@ class moderation(commands.Cog):
             parsed = True
             if len(args_list) > 1:
                 time = utils.utility.parse_time(args_list[-1])
-
-        # check for role
-        try:
-            r = await commands.RoleConverter().convert(ctx, args)
-            roles.add(r)
-            parsed = True
-        except:
             pass
 
         # check for member
@@ -104,23 +97,31 @@ class moderation(commands.Cog):
             except:
                 pass
 
-        if len(args_list) > 1 and utils.utility.parse_time(args_list[-1]) > 0:
+        # check for role
+        try:
+            r = await commands.RoleConverter().convert(ctx, args)
+            roles.add(r)
+            parsed = True
+        except:
+            pass
 
-            # check for role with time
-            if not parsed:
-                try:
-                    r = await commands.RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
-                    roles.add(r)
-                    time = utils.utility.parse_time(args_list[-1])
-                    parsed = True
-                except:
-                    pass
+        if len(args_list) > 1 and utils.utility.parse_time(args_list[-1]) > 0:
 
             # check for member with time
             if not parsed:
                 try:
                     m = await commands.MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
                     members.add(m)
+                    time = utils.utility.parse_time(args_list[-1])
+                    parsed = True
+                except:
+                    pass
+
+            # check for role with time
+            if not parsed:
+                try:
+                    r = await commands.RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
+                    roles.add(r)
                     time = utils.utility.parse_time(args_list[-1])
                     parsed = True
                 except:
@@ -136,22 +137,22 @@ class moderation(commands.Cog):
                         continue
 
                 try:
-                    r = await commands.RoleConverter().convert(ctx, i)
-                    roles.add(r)
-                except:
-                    pass
-
-                try:
                     m = await commands.MemberConverter().convert(ctx, i)
                     members.add(m)
                 except:
                     pass
+
+                try:
+                    r = await commands.RoleConverter().convert(ctx, i)
+                    roles.add(r)
+                except:
+                    pass
             
             # check for mentions
-            for r in ctx.message.role_mentions:
-                r.add(r)
             for m in ctx.message.mentions:
                 members.add(m)
+            for r in ctx.message.role_mentions:
+                r.add(r)
             
         final_members = set([])
         roles, members = list(roles), list(members)
@@ -160,11 +161,11 @@ class moderation(commands.Cog):
             for m in ctx.guild.members:
                 final_members.add(m)
         else:
+            for m in members:
+                final_members.add(m)
             for r in roles:
                 for m in r.members:
                     final_members.add(m)
-            for m in members:
-                final_members.add(m)
 
         return everyone, roles, members, final_members, time
 
@@ -182,7 +183,7 @@ class moderation(commands.Cog):
                 await c.set_permissions(role, overwrite = role_overwrite)
 
         # get final list of members
-        everyone, roles, members, final_members, time = await self.parse_members(ctx, args)
+        everyone, roles, members, final_members, time = await self.parse_args(ctx, args)
         
         # checks
         if not final_members:
@@ -257,7 +258,7 @@ class moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members = True)
     @commands.guild_only()
     async def ban(self, ctx, *, args):
-        everyone, roles, members, final_members, time = await self.parse_members(ctx, args)
+        everyone, roles, members, final_members, time = await self.parse_args(ctx, args)
 
         if not final_members:
             await utils.utility.error_message(ctx, "No members found.")
@@ -279,7 +280,7 @@ class moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members = True)
     @commands.guild_only()
     async def unban(self, ctx, *, args):
-        everyone, roles, members, final_members, time = await self.parse_members(ctx, args)
+        everyone, roles, members, final_members, time = await self.parse_args(ctx, args)
 
         if not final_members:
             await utils.utility.error_message(ctx, "No members found.")
