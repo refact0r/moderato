@@ -51,6 +51,21 @@ class moderation(commands.Cog):
 
         return msg_string
 
+    def get_final_members(self, ctx, everyone, roles, members):
+        final_members = set()
+
+        if everyone:
+            for m in ctx.guild.members:
+                final_members.add(m)
+        else:
+            for m in members:
+                final_members.add(m)
+            for r in roles:
+                for m in r.members:
+                    final_members.add(m)
+
+        return list(final_members)
+
     # add role to members
     async def add_role(self, members, role, time):
         for m in members:
@@ -80,6 +95,7 @@ class moderation(commands.Cog):
         roles = set()
         time = 0
         
+        # check for time
         if len(args_list) > 1:
             time = utils.utility.parse_time(args_list[-1])
             if time > 0:
@@ -128,21 +144,8 @@ class moderation(commands.Cog):
                 members.add(m)
             for r in ctx.message.role_mentions:
                 r.add(r)
-            
-        final_members = set()
-        roles, members = list(roles), list(members)
 
-        if everyone:
-            for m in ctx.guild.members:
-                final_members.add(m)
-        else:
-            for m in members:
-                final_members.add(m)
-            for r in roles:
-                for m in r.members:
-                    final_members.add(m)
-
-        return everyone, roles, members, final_members, time
+        return everyone, list(roles), list(members), time
 
     # basic role moderation command
     async def role_command(self, ctx, args, add_role, name, role_name, role_overwrite, role_color):
@@ -157,8 +160,11 @@ class moderation(commands.Cog):
             for c in ctx.guild.channels:
                 await c.set_permissions(role, overwrite = role_overwrite)
 
+        # parsed args
+        everyone, roles, members, time = await self.parse_args(ctx, args)
+
         # get final list of members
-        everyone, roles, members, final_members, time = await self.parse_args(ctx, args)
+        final_members = self.get_final_members(ctx, everyone, roles, members)
         
         # checks
         if not final_members:
@@ -233,7 +239,8 @@ class moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members = True)
     @commands.guild_only()
     async def ban(self, ctx, *, args):
-        everyone, roles, members, final_members, time = await self.parse_args(ctx, args)
+        everyone, roles, members, time = await self.parse_args(ctx, args)
+        final_members = self.get_final_members(ctx, everyone, roles, members)
 
         if not final_members:
             await utils.utility.error_message(ctx, "No members found.")
@@ -255,7 +262,8 @@ class moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members = True)
     @commands.guild_only()
     async def unban(self, ctx, *, args):
-        everyone, roles, members, final_members, time = await self.parse_args(ctx, args)
+        everyone, roles, members, time = await self.parse_args(ctx, args)
+        final_members = self.get_final_members(ctx, everyone, roles, members)
 
         if not final_members:
             await ctx.send(embed = discord.Embed(description = "No members found.", color = utils.colors.error_color)) 
