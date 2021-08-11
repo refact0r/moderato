@@ -76,25 +76,29 @@ class moderation(commands.Cog):
         args_list = args.split(' ')
         parsed = False
         everyone = False
-        members = set([])
-        roles = set([])
+        members = set()
+        roles = set()
         time = 0
+        
+        if len(args_list) > 1:
+            time = utils.utility.parse_time(args_list[-1])
+            if time > 0:
+                args_list = args_list[:-1]
+                args = ' '.join(args_list)
 
         # check for "all" and @everyone
-        if "all" in args_list or "everyone" in args_list or ctx.message.mention_everyone:
+        if len(args_list) == 1 and ("all" in args_list or "everyone" in args_list or ctx.message.mention_everyone):
             everyone = True
             parsed = True
-            if len(args_list) > 1:
-                time = utils.utility.parse_time(args_list[-1])
-            pass
 
         # check for member
-        try:
-            m = await commands.MemberConverter().convert(ctx, args)
-            members.add(m)
-            parsed = True
-        except:
-            pass
+        if not parsed:
+            try:
+                m = await commands.MemberConverter().convert(ctx, args)
+                members.add(m)
+                parsed = True
+            except:
+                pass
 
         # check for role
         if not parsed:
@@ -105,48 +109,19 @@ class moderation(commands.Cog):
             except:
                 pass
 
-        if len(args_list) > 1 and utils.utility.parse_time(args_list[-1]) > 0:
-
-            # check for member with time
-            if not parsed:
-                try:
-                    m = await commands.MemberConverter().convert(ctx, ' '.join(args_list[:-1]))
-                    members.add(m)
-                    time = utils.utility.parse_time(args_list[-1])
-                    parsed = True
-                except:
-                    pass
-
-            # check for role with time
-            if not parsed:
-                try:
-                    r = await commands.RoleConverter().convert(ctx, ' '.join(args_list[:-1]))
-                    roles.add(r)
-                    time = utils.utility.parse_time(args_list[-1])
-                    parsed = True
-                except:
-                    pass
-
         if not parsed:
 
             # check for individual members and role names
-            for i in args_list:
-                if i == args_list[-1]:
-                    time = utils.utility.parse_time(i)
-                    if time > 0:
-                        continue
-
+            for arg in args_list:
                 try:
-                    m = await commands.MemberConverter().convert(ctx, i)
+                    m = await commands.MemberConverter().convert(ctx, arg)
                     members.add(m)
                 except:
-                    pass
-
-                try:
-                    r = await commands.RoleConverter().convert(ctx, i)
-                    roles.add(r)
-                except:
-                    pass
+                    try:
+                        r = await commands.RoleConverter().convert(ctx, arg)
+                        roles.add(r)
+                    except:
+                        pass
             
             # check for mentions
             for m in ctx.message.mentions:
@@ -154,7 +129,7 @@ class moderation(commands.Cog):
             for r in ctx.message.role_mentions:
                 r.add(r)
             
-        final_members = set([])
+        final_members = set()
         roles, members = list(roles), list(members)
 
         if everyone:
@@ -292,10 +267,8 @@ class moderation(commands.Cog):
         for m in final_members:
             try:
                 await m.unban()
-            except discord.Forbidden:
-                await msg.edit(embed = discord.Embed(description = "No members found.", color = utils.colors.error_color)) 
-            except discord.NotFound:
-                await msg.edit(embed = discord.Embed(description = "No members found.", color = utils.colors.error_color)) 
+            except:
+                await msg.edit(embed = discord.Embed(description = "No members found.", color = utils.colors.error_color))
                 
         if time <= 0:
             return
