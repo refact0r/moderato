@@ -63,7 +63,7 @@ class moderation(commands.Cog):
 
     # remove role from members
     async def remove_role(self, members, role, time):
-        for m in role.members:
+        for m in members:
             await m.remove_roles(role)
         if time <= 0:
             return
@@ -283,14 +283,20 @@ class moderation(commands.Cog):
         everyone, roles, members, final_members, time = await self.parse_args(ctx, args)
 
         if not final_members:
-            await utils.utility.error_message(ctx, "No members found.")
+            await ctx.send(embed = discord.Embed(description = "No members found.", color = utils.colors.error_color)) 
             return
 
         msg_string = self.generate_message(everyone, roles, members, time, "unbanned")
-        await utils.utility.embed_message(ctx, msg_string, utils.colors.ban_color)
+        msg = await ctx.send(embed = discord.Embed(description = msg_string, color = utils.colors.ban_color)) 
 
         for m in final_members:
-            await m.unban()
+            try:
+                await m.unban()
+            except discord.Forbidden:
+                await msg.edit(embed = discord.Embed(description = "No members found.", color = utils.colors.error_color)) 
+            except discord.NotFound:
+                await msg.edit(embed = discord.Embed(description = "No members found.", color = utils.colors.error_color)) 
+                
         if time <= 0:
             return
         await asyncio.sleep(time)
