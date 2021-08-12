@@ -160,6 +160,10 @@ class moderation(commands.Cog):
             for c in ctx.guild.channels:
                 await c.set_permissions(role, overwrite = role_overwrite)
 
+        if role > ctx.guild.get_member(self.client.user.id).top_role:
+            await utils.utility.error_message(ctx, "I do not have permission to run this command.")
+            return
+
         # parsed args
         everyone, roles, members, time = await self.parse_args(ctx, args)
 
@@ -175,6 +179,7 @@ class moderation(commands.Cog):
             await ctx.send(f"You cannot use this command on more than 100 users at once.")
             return
         '''
+
 
         # generate and send message
         msg_string = self.generate_message(everyone, roles, members, time, name)
