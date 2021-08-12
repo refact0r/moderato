@@ -148,18 +148,19 @@ class moderation(commands.Cog):
         return everyone, list(roles), list(members), time
 
     # basic role moderation command
-    async def role_command(self, ctx, args, add_role, name, role_name, role_overwrite, role_color):
+    async def role_command(self, ctx, args, add_role, command_name, role_name, role_overwrite, role_color):
 
         # find role or create if it doesnt exist
         role = None
         for r in ctx.guild.roles:
-            if r.name == role_name.capitalize() or r.name == role_name:
+            if r.name == role_name or r.name == role_name:
                 role = r
         if not role:
-            role = await ctx.guild.create_role(name = role_name.capitalize(), color = role_color)
+            role = await ctx.guild.create_role(name = role_name, color = role_color)
             for c in ctx.guild.channels:
                 await c.set_permissions(role, overwrite = role_overwrite)
 
+        # check if role is higher than bot
         if role > ctx.guild.get_member(self.client.user.id).top_role:
             await utils.utility.error_message(ctx, "I do not have permission to run this command.")
             return
@@ -182,7 +183,7 @@ class moderation(commands.Cog):
 
 
         # generate and send message
-        msg_string = self.generate_message(everyone, roles, members, time, name)
+        msg_string = self.generate_message(everyone, roles, members, time, command_name)
         await utils.utility.embed_message(ctx, msg_string, role_color)
 
         # add or remove role
