@@ -16,7 +16,7 @@ class moderation(commands.Cog):
         self.client = client
     
     # generate message string
-    def generate_message(self, everyone, roles, members, time, name):
+    def generate_message(self, everyone, roles, members, time, action):
         msg_string = ""
         plural = False
         if everyone:
@@ -24,25 +24,25 @@ class moderation(commands.Cog):
         else:
             if len(roles) > 0:
                 if len(roles) == 1:
-                    msg_string += f"the role `{roles[0].name}`"
+                    msg_string += f"the role <@&{roles[0].id}>"
                 else:
-                    msg_string += f"the roles `{'`, `'.join([r.name for r in roles])}`"
+                    msg_string += f"the roles {', '.join([f'<@&{r.id}>' for r in roles])}"
                     plural = True
                 if members:
                     msg_string += " and "
                     plural = True
             if len(members) > 0:
                 if len(members) == 1:
-                    msg_string += f"the member `{members[0].name}`"
+                    msg_string += f"the member <@{members[0].id}>"
                 else:
-                    msg_string += f"the members `{'`, `'.join([m.name for m in members])}`"
+                    msg_string += f"the members {', '.join([f'<@{m.id}>' for m in members])}"
                     plural = True
             msg_string = msg_string[0].upper() + msg_string[1:]
 
         if plural:
-            msg_string += f" were {name}"
+            msg_string += f" were {action}"
         else:
-            msg_string += f" was {name}"
+            msg_string += f" was {action}"
 
         if time != 0:
             msg_string += f" for `{utils.utility.time_string(time)}`."
@@ -162,7 +162,7 @@ class moderation(commands.Cog):
 
         # check if role is higher than bot
         if role > ctx.guild.get_member(self.client.user.id).top_role:
-            await utils.utility.error_message(ctx, "I do not have permission to run this command.")
+            await utils.utility.error_message(ctx, f"I can't run this command because the <@&{role.id}> role is higher than me.")
             return
 
         # parsed args
