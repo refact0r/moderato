@@ -6,9 +6,6 @@ import utils.colors
 import utils.utility
 import os
 
-cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
-db = cluster["discordbot"]
-
 class moderation(commands.Cog):
     """Commands for user moderation."""
     
