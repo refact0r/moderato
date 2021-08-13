@@ -1,6 +1,7 @@
 import discord
 import os
 from discord.ext import commands
+import pymongo
 
 bot_token = os.getenv('BOT_TOKEN')
 
@@ -11,6 +12,9 @@ intents.presences = True
 prefixes = ['%']
 client = commands.Bot(command_prefix = prefixes, intents = intents)
 client.remove_command('help')
+
+cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
+client.db = cluster["discordbot"]
 
 for file in os.listdir('./cogs'):
 	if file.endswith('.py'):

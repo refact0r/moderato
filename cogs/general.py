@@ -7,9 +7,6 @@ import utils.colors
 import utils.utility
 import os
 
-cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
-db = cluster['discordbot']
-
 cog_order = ['general', 'moderation']
 
 class general(commands.Cog):
@@ -104,7 +101,7 @@ class general(commands.Cog):
     @commands.command(aliases = ['p'], brief = "Checks the bot's latency.", help = "%ping")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def ping(self, ctx):
-        collection = db['ping']
+        collection = self.client.db['ping']
 
         before = time.monotonic()
         embed, message = await utils.utility.embed_message(ctx, "Pong!", utils.colors.ping_color)
@@ -119,7 +116,7 @@ class general(commands.Cog):
 
     @commands.command(aliases = ['pl', 'plb'], brief = "Gets the fastest and slowest pings achieved.", help = "%pingleaderboard")
     async def pingleaderboard(self, ctx):
-        collection = db['ping']
+        collection = self.client.db['ping']
         fastest = collection.find_one({'_id': 0})
         slowest = collection.find_one({'_id': 1})
         
