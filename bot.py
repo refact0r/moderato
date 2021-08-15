@@ -10,20 +10,22 @@ intents.members = True
 intents.presences = True
 
 prefixes = ['%']
-client = commands.Bot(command_prefix = prefixes, intents = intents)
+client = commands.Bot(command_prefix=prefixes, intents=intents)
 client.remove_command('help')
 
 cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
 client.db = cluster["discordbot"]
 
 for file in os.listdir('./cogs'):
-	if file.endswith('.py'):
-		client.load_extension(f'cogs.{file[:-3]}')
+    if file.endswith('.py'):
+        client.load_extension(f'cogs.{file[:-3]}')
+
 
 @client.event
 async def on_ready():
-	await client.change_presence(activity = discord.Game(name = "ping for prefix"))
-	print("bot has connected to discord")
+    await client.change_presence(activity=discord.Game(name="ping for prefix"))
+    print("bot has connected to discord")
+
 
 @client.event
 async def on_message(message):
@@ -32,4 +34,3 @@ async def on_message(message):
     await client.process_commands(message)
 
 client.run(bot_token)
-	

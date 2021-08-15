@@ -4,6 +4,9 @@ import math
 from os import error
 import utils.colors
 import utils.utility
+import traceback
+import sys
+
 
 class error(commands.Cog):
 
@@ -39,7 +42,8 @@ class error(commands.Cog):
             return
 
         if isinstance(error, commands.BotMissingPermissions):
-            missing = [perm.replace('_', ' ').replace('guild', 'server').title() for perm in error.missing_perms]
+            missing = [perm.replace('_', ' ').replace(
+                'guild', 'server').title() for perm in error.missing_perms]
             if len(missing) > 1:
                 message = "I need the permissions"
             else:
@@ -49,7 +53,8 @@ class error(commands.Cog):
             return
 
         if isinstance(error, commands.MissingPermissions):
-            missing = [perm.replace('_', ' ').replace('guild', 'server').title() for perm in error.missing_perms]
+            missing = [perm.replace('_', ' ').replace(
+                'guild', 'server').title() for perm in error.missing_perms]
             if len(missing) > 1:
                 message = "You need the permissions"
             else:
@@ -61,11 +66,15 @@ class error(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             await utils.utility.error_message(ctx, "You do not have permission to use this command.")
             return
-        
+
         if isinstance(error, discord.Forbidden):
             await utils.utility.error_message(ctx, "I do not have permission to run this command.")
-        
-        print(error)
-    
+
+        print('Ignoring exception in command {}:'.format(
+            ctx.command), file=sys.stderr)
+        traceback.print_exception(
+            type(error), error, error.__traceback__, file=sys.stderr)
+
+
 def setup(client):
     client.add_cog(error(client))
