@@ -134,12 +134,13 @@ class moderation(commands.Cog):
     async def update_role_timed(self, member, role, add_role, time):
         await asyncio.sleep(time)
         if add_role:
+            print(f"remove from {member.name}")
             await member.remove_roles(role)
+            print(f"add to {member.name}")
         else:
             await member.add_roles(role)
 
     # parses members from args
-
     async def parse_args(self, ctx, args):
         args_list = args.split(' ')
         parsed = False
@@ -224,7 +225,7 @@ class moderation(commands.Cog):
         # get final list of members
         final_members = self.get_final_members(ctx, everyone, roles, members)
 
-        # checks
+        # check for no members
         if not final_members:
             await utility.error_message(ctx, "No members found.")
             return
@@ -250,32 +251,40 @@ class moderation(commands.Cog):
             members = final_members
 
             if time:
+                # send before updating message
                 before_string = self.before_update_string(
                     everyone, roles, has_role, time, verb)
                 embed, msg_update = await utility.embed_message(ctx, before_string, role_color)
             else:
+                # error message if no time
                 await utility.error_message(ctx, self.already_error(has_role, past))
 
+        # if there are still members remaining send normal before message
         if everyone or roles or members or final_members:
             before_string = self.before_string(
                 everyone, roles, members, time, present)
             embed, msg = await utility.embed_message(ctx, before_string, role_color)
 
+        # update roles
         await self.update_roles(members, role, add_role)
 
         for m in final_members:
+            # if there is already a timer cancel it
+            if m.id in self.role_punishments[role_name]:
+                current = self.role_punishments[role_name].pop(m.id)
+                current.cancel()
+            # add a new timer if time is given
             if time:
                 self.role_punishments[role_name][m.id] = asyncio.create_task(
                     self.update_role_timed(m, role, add_role, time))
-            else:
-                if m.id in self.role_punishments[role_name]:
-                    self.role_punishments[role_name][m.id].cancel()
 
+        # send after updated message
         if has_role and time:
             after_string = self.after_update_string(
                 everyone, roles, has_role, time, past)
             await msg_update.edit(embed=discord.Embed(description=after_string))
 
+        # send normal after message
         if everyone or roles or members or final_members:
             after_string = self.after_string(
                 everyone, roles, members, time, past)
@@ -297,6 +306,7 @@ class moderation(commands.Cog):
     async def unmute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages=False)
         await self.role_command(ctx, args, False, "unmute", "unmuted", "unmuting", "Muted", overwrite, colors.muted_color)
+        print(self.role_punishments)
 
     @commands.command(aliases=["f"], brief="Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help="%freeze [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles=True)
