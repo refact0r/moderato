@@ -3,6 +3,7 @@
 a moderation discord bot
 
 currently private because some things are broken
+
 if i know you i'll probably give you an invite link if you want
 
 ## contributing
