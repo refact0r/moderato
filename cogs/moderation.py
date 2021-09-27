@@ -263,7 +263,7 @@ class moderation(commands.Cog):
         # send after message
         after_string = self.after_string(
             everyone, roles, members, time, past)
-        await msg.edit(embed=discord.Embed(description=after_string))
+        await msg.edit(embed=discord.Embed(description=after_string, color=role_color))
 
     async def ban_command(self, ctx, args, ban_bool):
         unparsed, everyone, roles, members, time = await self.parse_args(ctx, args, True)
@@ -341,7 +341,7 @@ class moderation(commands.Cog):
         # send after message
         after_string = self.after_string(
             everyone, roles, members, time, "banned" if ban_bool else "unbanned")
-        await msg.edit(embed=discord.Embed(description=after_string))
+        await msg.edit(embed=discord.Embed(description=after_string, color=colors.ban_color))
 
     @commands.command(aliases=["m"], brief="Prevents a user sending messages", help="%mute [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles=True)
@@ -451,7 +451,7 @@ class moderation(commands.Cog):
         # send after message
         after_string = self.after_string(
             everyone, roles, members, time, "kicked")
-        await msg.edit(embed=discord.Embed(description=after_string))
+        await msg.edit(embed=discord.Embed(description=after_string, color=colors.kick_color))
 
 
 def setup(client):
