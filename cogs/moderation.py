@@ -99,16 +99,16 @@ class moderation(commands.Cog):
 
         return list(final_members)
 
-    async def update_role_timed(self, member, role, add_role, time):
+    async def update_role_timed(self, member, role, add_bool, time):
         await asyncio.sleep(time)
-        if add_role:
+        if add_bool:
             await member.remove_roles(role)
         else:
             await member.add_roles(role)
 
-    async def ban_timed(self, guild, member, ban, time):
+    async def ban_timed(self, guild, member, ban_bool, time):
         await asyncio.sleep(time)
-        if ban:
+        if ban_bool:
             await guild.unban(member)
         else:
             await guild.ban(member)
@@ -186,7 +186,7 @@ class moderation(commands.Cog):
         return unparsed, everyone, roles, members, time
 
     # basic role moderation command
-    async def role_command(self, ctx, args, add_role, verb, past, present, role_name, role_overwrite, role_color):
+    async def role_command(self, ctx, args, add_bool, verb, past, present, role_name, role_overwrite, role_color):
 
         # find role or create if it doesnt exist
         role = None
@@ -223,7 +223,7 @@ class moderation(commands.Cog):
         # set already to members that already have/don't have the role and remove them from final_members
         already = []
         for m in final_members:
-            if (role in m.roles and add_role) or (role not in m.roles and not add_role):
+            if (role in m.roles and add_bool) or (role not in m.roles and not add_bool):
                 already.append(m)
 
         if not time:
@@ -233,7 +233,7 @@ class moderation(commands.Cog):
                     final_members.remove(m)
                 if m in members:
                     members.remove(m)
-            
+
             # send already error
             if already:
                 await utility.error_message(ctx, self.already_error(already, past))
@@ -247,7 +247,7 @@ class moderation(commands.Cog):
 
         for m in final_members:
             if m not in already:
-                if add_role:
+                if add_bool:
                     await m.add_roles(role)
                 else:
                     await m.remove_roles(role)
@@ -258,12 +258,99 @@ class moderation(commands.Cog):
             # add a new timer if time is given
             if time:
                 self.role_punishments[role_name][m.id] = asyncio.create_task(
-                    self.update_role_timed(m, role, add_role, time))
+                    self.update_role_timed(m, role, add_bool, time))
 
         # send after message
         after_string = self.after_string(
             everyone, roles, members, time, past)
         await msg.edit(embed=discord.Embed(description=after_string))
+
+    async def ban_command(self, ctx, args, ban_bool):
+        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args)
+
+        roles = list(roles)
+        members = list(members)
+
+        final_members = self.get_final_members(ctx, everyone, roles, members)
+
+        if not final_members:
+            await ctx.send(embed=discord.Embed(description="No members found.", color=colors.error_color))
+            return
+
+        bans = await ctx.guild.bans()
+        bans = [ban.user for ban in bans]
+
+        bot_member = ctx.guild.get_member(self.client.user.id)
+
+        already = []
+        temp = []
+        higher = []
+        for m in final_members:
+            try:
+                banentry = await ctx.guild.fetch_ban(m)
+                if ban_bool:
+                    already.append(m)
+                else:
+                    temp.append(m)
+            except:
+                if m.top_role >= bot_member.top_role:
+                    higher.append(m)
+                else:
+                    if ban_bool:
+                        temp.append(m)
+                    else:
+                        already.append(m)
+        final_members = temp
+
+        if already:
+            # if some members already don't use roles/everyone in the message
+            everyone = False
+            roles = []
+            members = final_members
+
+            if time:
+                if higher:
+                    await utility.error_message(ctx, self.higher_error(higher, "ban" if ban_bool else "unban"))
+                # send before updating message
+                before_string = self.before_update_string(
+                    everyone, roles, already, time, "ban" if ban_bool else "unban")
+                embed, msg_update = await utility.embed_message(ctx, before_string, colors.ban_color)
+            else:
+                # error message if no time
+                await utility.error_message(ctx, self.already_error(already, "banned" if ban_bool else "unbanned"))
+
+        # if there are still members remaining send normal before message
+        if everyone or roles or members or final_members:
+            before_string = self.before_string(
+                everyone, roles, members, time, "banning" if ban_bool else "unbanning")
+            embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
+
+        # ban members
+        for m in final_members:
+            if ban_bool:
+                await ctx.guild.ban(m)
+            else:
+                await ctx.guild.unban(m)
+            # if there is already a timer cancel it
+            if m.id in self.bans:
+                current = self.bans.pop(m.id)
+                current.cancel()
+            # add a new timer if time is given
+            if time:
+                self.bans[m.id] = asyncio.create_task(
+                    self.ban_timed(ctx.guild, m, ban_bool, time))
+
+        # send after updated message
+        if already and time:
+            after_string = self.after_update_string(
+                everyone, roles, already, time, "ban" if ban_bool else "unban")
+            await msg_update.edit(embed=discord.Embed(description=after_string))
+
+        # send normal after message
+        if everyone or roles or members or final_members:
+            after_string = self.after_string(
+                everyone, roles, members, time, "banned" if ban_bool else "unbanned")
+            await msg.edit(embed=discord.Embed(description=after_string))
 
     @commands.command(aliases=["m"], brief="Prevents a user sending messages", help="%mute [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles=True)
@@ -322,183 +409,14 @@ class moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(self, ctx, *, args):
-        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args)
-
-        '''
-        if unparsed:
-            outside_members = await self.parse_outside(ctx, unparsed)
-            members |= outside_members
-        '''
-
-        roles = list(roles)
-        members = list(members)
-
-        final_members = self.get_final_members(ctx, everyone, roles, members)
-
-        if not final_members:
-            await utility.error_message(ctx, "No members found.")
-            return
-
-        bot_member = ctx.guild.get_member(self.client.user.id)
-
-        # set already to members that already are banned
-        already = []
-        temp = []
-        higher = []
-        for m in final_members:
-            try:
-                banentry = await ctx.guild.fetch_ban(m)
-                already.append(m)
-            except:
-                if m.top_role >= bot_member.top_role:
-                    higher.append(m)
-                else:
-                    temp.append(m)
-        final_members = temp
-
-        if higher:
-            everyone = False
-            roles = []
-            members = final_members
-            await utility.error_message(ctx, self.higher_error(higher, "ban"))
-
-        if already:
-            # if some members already have the role don't use roles/everyone in the message
-            everyone = False
-            roles = []
-            members = final_members
-
-            if time:
-                # send before updating message
-                before_string = self.before_update_string(
-                    everyone, roles, already, time, "ban")
-                embed, msg_update = await utility.embed_message(ctx, before_string, colors.ban_color)
-            else:
-                # error message if no time
-                await utility.error_message(ctx, self.already_error(already, "banned"))
-
-        # if there are still members remaining send normal before message
-        if everyone or roles or members or final_members:
-            before_string = self.before_string(
-                everyone, roles, members, time, "banning")
-            embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
-
-        # ban members
-        for m in final_members:
-            await ctx.guild.ban(m)
-            # if there is already a timer cancel it
-            if m.id in self.bans:
-                current = self.bans.pop(m.id)
-                current.cancel()
-            # add a new timer if time is given
-            if time:
-                self.bans[m.id] = asyncio.create_task(
-                    self.ban_timed(ctx.guild, m, True, time))
-
-        # send after updated message
-        if already and time:
-            after_string = self.after_update_string(
-                everyone, roles, already, time, "ban")
-            await msg_update.edit(embed=discord.Embed(description=after_string))
-
-        # send normal after message
-        if everyone or roles or members or final_members:
-            after_string = self.after_string(
-                everyone, roles, members, time, "banned")
-            await msg.edit(embed=discord.Embed(description=after_string))
+        await self.ban_command(ctx, args, True)
 
     @commands.command(aliases=["ub"], brief="Unbans a user.", help="%unban [user(s) or role(s) or all] (time)")
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     async def unban(self, ctx, *, args):
-        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args)
-
-        '''
-        if unparsed:
-            outside_members = await self.parse_outside(ctx, unparsed)
-            members |= outside_members
-        '''
-
-        roles = list(roles)
-        members = list(members)
-
-        final_members = self.get_final_members(ctx, everyone, roles, members)
-
-        if not final_members:
-            await ctx.send(embed=discord.Embed(description="No members found.", color=colors.error_color))
-            return
-
-        bans = await ctx.guild.bans()
-        bans = [ban.user for ban in bans]
-
-        bot_member = ctx.guild.get_member(self.client.user.id)
-
-        already = []
-        temp = []
-        higher = []
-        for m in final_members:
-            try:
-                banentry = await ctx.guild.fetch_ban(m)
-                temp.append(m)
-            except:
-                if isinstance(m, discord.Member) and m.top_role >= bot_member.top_role:
-                    higher.append(m)
-                else:
-                    already.append(m)
-        final_members = temp
-
-        print(already)
-        print(final_members)
-        print(higher)
-
-        if already:
-            # if some members already have the role don't use roles/everyone in the message
-            everyone = False
-            roles = []
-            members = final_members
-
-            if time:
-                if higher:
-                    await utility.error_message(ctx, self.higher_error(higher, "unban"))
-                # send before updating message
-                before_string = self.before_update_string(
-                    everyone, roles, already, time, "unban")
-                embed, msg_update = await utility.embed_message(ctx, before_string, colors.ban_color)
-            else:
-                # error message if no time
-                await utility.error_message(ctx, self.already_error(already, "unbanned"))
-
-        # if there are still members remaining send normal before message
-        if everyone or roles or members or final_members:
-            before_string = self.before_string(
-                everyone, roles, members, time, "unbanning")
-            embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
-
-        # ban members
-        for m in final_members:
-            await ctx.guild.unban(m)
-            # if there is already a timer cancel it
-            if m.id in self.bans:
-                current = self.bans.pop(m.id)
-                current.cancel()
-            # add a new timer if time is given
-            if time:
-                self.bans[m.id] = asyncio.create_task(
-                    self.ban_timed(ctx.guild, m, False, time))
-
-        # send after updated message
-        if already and time:
-            after_string = self.after_update_string(
-                everyone, roles, already, time, "unban")
-            await msg_update.edit(embed=discord.Embed(description=after_string))
-
-        # send normal after message
-        if everyone or roles or members or final_members:
-            after_string = self.after_string(
-                everyone, roles, members, time, "unbanned")
-            await msg.edit(embed=discord.Embed(description=after_string))
-
+        await self.ban_command(ctx, args, False)
 
 def setup(client):
     client.add_cog(moderation(client))
