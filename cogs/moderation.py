@@ -324,9 +324,11 @@ class moderation(commands.Cog):
     async def ban(self, ctx, *, args):
         unparsed, everyone, roles, members, time = await self.parse_args(ctx, args)
 
+        '''
         if unparsed:
             outside_members = await self.parse_outside(ctx, unparsed)
             members |= outside_members
+        '''
 
         roles = list(roles)
         members = list(members)
@@ -348,7 +350,7 @@ class moderation(commands.Cog):
                 banentry = await ctx.guild.fetch_ban(m)
                 already.append(m)
             except:
-                if m.top_role > bot_member.top_role:
+                if m.top_role >= bot_member.top_role:
                     higher.append(m)
                 else:
                     temp.append(m)
@@ -412,9 +414,11 @@ class moderation(commands.Cog):
     async def unban(self, ctx, *, args):
         unparsed, everyone, roles, members, time = await self.parse_args(ctx, args)
 
+        '''
         if unparsed:
             outside_members = await self.parse_outside(ctx, unparsed)
             members |= outside_members
+        '''
 
         roles = list(roles)
         members = list(members)
@@ -438,7 +442,7 @@ class moderation(commands.Cog):
                 banentry = await ctx.guild.fetch_ban(m)
                 temp.append(m)
             except:
-                if isinstance(m, discord.Member) and m.top_role > bot_member.top_role:
+                if isinstance(m, discord.Member) and m.top_role >= bot_member.top_role:
                     higher.append(m)
                 else:
                     already.append(m)
