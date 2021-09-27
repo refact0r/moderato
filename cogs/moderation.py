@@ -124,7 +124,7 @@ class moderation(commands.Cog):
         return members
 
     # parses members from args
-    async def parse_args(self, ctx, args):
+    async def parse_args(self, ctx, args, time_bool):
         args_list = args.split(' ')
         unparsed = []
         parsed = False
@@ -134,7 +134,7 @@ class moderation(commands.Cog):
         time = 0
 
         # check for time
-        if len(args_list) > 1:
+        if len(args_list) > 1 and time_bool:
             time = utility.parse_time(args_list[-1])
             if time > 0:
                 args_list = args_list[:-1]
@@ -204,7 +204,7 @@ class moderation(commands.Cog):
             return
 
         # parsed args
-        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args)
+        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args, True)
         roles = list(roles)
         members = list(members)
 
@@ -266,7 +266,7 @@ class moderation(commands.Cog):
         await msg.edit(embed=discord.Embed(description=after_string))
 
     async def ban_command(self, ctx, args, ban_bool):
-        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args)
+        everyone, roles, members, time = await self.parse_args(ctx, args, True)
 
         roles = list(roles)
         members = list(members)
@@ -283,47 +283,45 @@ class moderation(commands.Cog):
         bot_member = ctx.guild.get_member(self.client.user.id)
 
         already = []
-        temp = []
         higher = []
         for m in final_members:
             try:
                 banentry = await ctx.guild.fetch_ban(m)
                 if ban_bool:
                     already.append(m)
-                else:
-                    temp.append(m)
             except:
                 if m.top_role >= bot_member.top_role:
                     higher.append(m)
                 else:
-                    if ban_bool:
-                        temp.append(m)
-                    else:
+                    if not ban_bool:
                         already.append(m)
-        final_members = temp
 
-        if already:
-            # if some members already don't use roles/everyone in the message
-            everyone = False
-            roles = []
-            members = final_members
+        if higher:
+            for m in higher:
+                if m in final_members:
+                    final_members.remove(m)
+                if m in members:
+                    members.remove(m)
+            await utility.error_message(ctx, self.higher_error(higher, "ban" if ban_bool else "unban"))
 
-            if time:
-                if higher:
-                    await utility.error_message(ctx, self.higher_error(higher, "ban" if ban_bool else "unban"))
-                # send before updating message
-                before_string = self.before_update_string(
-                    everyone, roles, already, time, "ban" if ban_bool else "unban")
-                embed, msg_update = await utility.embed_message(ctx, before_string, colors.ban_color)
-            else:
-                # error message if no time
+        if not time:
+            # remove members in already from final_members and members
+            for m in already:
+                if m in final_members:
+                    final_members.remove(m)
+                if m in members:
+                    members.remove(m)
+
+            # send already error
+            if already:
                 await utility.error_message(ctx, self.already_error(already, "banned" if ban_bool else "unbanned"))
+                if not final_members:
+                    return
 
-        # if there are still members remaining send normal before message
-        if everyone or roles or members or final_members:
-            before_string = self.before_string(
-                everyone, roles, members, time, "banning" if ban_bool else "unbanning")
-            embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
+        # send before message
+        before_string = self.before_string(
+            everyone, roles, members, time, "banning" if ban_bool else "unbanning")
+        embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
 
         # ban members
         for m in final_members:
@@ -340,17 +338,10 @@ class moderation(commands.Cog):
                 self.bans[m.id] = asyncio.create_task(
                     self.ban_timed(ctx.guild, m, ban_bool, time))
 
-        # send after updated message
-        if already and time:
-            after_string = self.after_update_string(
-                everyone, roles, already, time, "ban" if ban_bool else "unban")
-            await msg_update.edit(embed=discord.Embed(description=after_string))
-
-        # send normal after message
-        if everyone or roles or members or final_members:
-            after_string = self.after_string(
-                everyone, roles, members, time, "banned" if ban_bool else "unbanned")
-            await msg.edit(embed=discord.Embed(description=after_string))
+        # send after message
+        after_string = self.after_string(
+            everyone, roles, members, time, "banned" if ban_bool else "unbanned")
+        await msg.edit(embed=discord.Embed(description=after_string))
 
     @commands.command(aliases=["m"], brief="Prevents a user sending messages", help="%mute [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles=True)
@@ -417,6 +408,51 @@ class moderation(commands.Cog):
     @commands.guild_only()
     async def unban(self, ctx, *, args):
         await self.ban_command(ctx, args, False)
+
+    @commands.command(aliases=["k"], brief="Kicks a user.", help="%kick [user(s) or role(s) or all] (time)")
+    @commands.has_permissions(kick_members=True)
+    @commands.bot_has_permissions(kick_members=True)
+    @commands.guild_only()
+    async def kick(self, ctx, *, args):
+        everyone, roles, members, time = await self.parse_args(ctx, args, False)
+
+        roles = list(roles)
+        members = list(members)
+
+        final_members = self.get_final_members(ctx, everyone, roles, members)
+
+        if not final_members:
+            await ctx.send(embed=discord.Embed(description="No members found.", color=colors.error_color))
+            return
+
+        bot_member = ctx.guild.get_member(self.client.user.id)
+
+        higher = []
+        for m in final_members:
+            if m.top_role >= bot_member.top_role:
+                if m in final_members:
+                    final_members.remove(m)
+                if m in members:
+                    members.remove(m)
+                higher.append(m)
+
+        if higher:
+            await utility.error_message(ctx, self.higher_error(higher, "kick"))
+
+        # send before message
+        before_string = self.before_string(
+            everyone, roles, members, time, "kicking")
+        embed, msg = await utility.embed_message(ctx, before_string, colors.kick_color)
+
+        # ban members
+        for m in final_members:
+            await ctx.guild.kick(m)
+
+        # send after message
+        after_string = self.after_string(
+            everyone, roles, members, time, "kicked")
+        await msg.edit(embed=discord.Embed(description=after_string))
+
 
 def setup(client):
     client.add_cog(moderation(client))
