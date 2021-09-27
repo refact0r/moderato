@@ -266,7 +266,7 @@ class moderation(commands.Cog):
         await msg.edit(embed=discord.Embed(description=after_string))
 
     async def ban_command(self, ctx, args, ban_bool):
-        everyone, roles, members, time = await self.parse_args(ctx, args, True)
+        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args, True)
 
         roles = list(roles)
         members = list(members)
@@ -414,7 +414,7 @@ class moderation(commands.Cog):
     @commands.bot_has_permissions(kick_members=True)
     @commands.guild_only()
     async def kick(self, ctx, *, args):
-        everyone, roles, members, time = await self.parse_args(ctx, args, False)
+        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args, False)
 
         roles = list(roles)
         members = list(members)
