@@ -387,6 +387,12 @@ class moderation(commands.Cog):
             everyone, roles, members, time, "kicked")
         await msg.edit(embed=discord.Embed(description=after_string, color=colors.kick_color))
 
+    @commands.command(aliases=["p"], brief="Purges messages.", help="%purge (# of messages)")
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def purge(self, ctx, amount: int):
+        deleted = await ctx.channel.purge(limit=amount)
 
 def setup(client):
     client.add_cog(moderation(client))

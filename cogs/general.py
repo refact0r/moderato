@@ -101,7 +101,7 @@ class general(commands.Cog):
     async def hi(self, ctx):
         await ctx.send(f"Hello, {ctx.author.display_name}")
 
-    @commands.command(aliases=['p'], brief="Checks the bot's latency.", help="%ping")
+    @commands.command(aliases=[], brief="Checks the bot's latency.", help="%ping")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def ping(self, ctx):
         collection = self.client.db['ping']
