@@ -392,7 +392,7 @@ class moderation(commands.Cog):
     @commands.bot_has_permissions(manage_messages=True)
     @commands.guild_only()
     async def purge(self, ctx, amount: int):
-        deleted = await ctx.channel.purge(limit=amount)
+        deleted = await ctx.channel.purge(limit=amount + 1)
 
 def setup(client):
     client.add_cog(moderation(client))
