@@ -2,8 +2,7 @@ import asyncio
 import discord
 from discord.ext import commands
 import pymongo
-from utils import colors
-from utils import utility
+from utils import colors, utility, strings
 import os
 
 
@@ -18,71 +17,6 @@ class moderation(commands.Cog):
             "Exiled": {}
         }
         self.bans = {}
-
-    # generate already error string
-    def already_error(self, members, action):
-        if len(members) == 1:
-            return f"The member <@{members[0].id}> is already {action}."
-        else:
-            return f"The members {', '.join([f'<@{m.id}>' for m in members])} are already {action}."
-
-    # generate already error string
-    def higher_error(self, members, action):
-        if len(members) == 1:
-            return f"I do not have the permissions to {action} the member <@{members[0].id}>."
-        else:
-            return f"I do not have the permissions to {action} the members {', '.join([f'<@{m.id}>' for m in members])}."
-
-    # generate member string
-    def member_string(self, everyone, roles, members):
-        string = ""
-
-        if everyone:
-            string += "everyone"
-        else:
-            if roles:
-                if len(roles) == 1:
-                    string += f"the role <@&{roles[0].id}>"
-                else:
-                    string += f"the roles {', '.join([f'<@&{r.id}>' for r in roles])}"
-                if members:
-                    string += " and "
-            if members:
-                if len(members) == 1:
-                    string += f"the member <@{members[0].id}>"
-                else:
-                    string += f"the members {', '.join([f'<@{m.id}>' for m in members])}"
-
-        return string
-
-    # generate before message string
-    def before_string(self, everyone, roles, members, time, action):
-        string = f"{action} ".capitalize()
-        string += self.member_string(everyone, roles, members)
-
-        if time:
-            string += f" for `{utility.time_string(time)}`..."
-        else:
-            string += "..."
-
-        return string
-
-    # generate after message string
-    def after_string(self, everyone, roles, members, time, action):
-        string = self.member_string(everyone, roles, members)
-        string = string[0].upper() + string[1:]
-
-        if len(roles) > 1 or len(members) > 1 or (len(roles) == 1 and len(members) == 1):
-            string += f" were {action}"
-        else:
-            string += f" was {action}"
-
-        if time:
-            string += f" for `{utility.time_string(time)}`."
-        else:
-            string += "."
-
-        return string
 
     def get_final_members(self, ctx, everyone, roles, members):
         final_members = set()
@@ -236,12 +170,12 @@ class moderation(commands.Cog):
 
             # send already error
             if already:
-                await utility.error_message(ctx, self.already_error(already, past))
+                await utility.error_message(ctx, strings.already_error_string(already, past))
                 if not final_members:
                     return
 
         # send before message
-        before_string = self.before_string(
+        before_string = strings.before_string(
             everyone, roles, members, time, present)
         embed, msg = await utility.embed_message(ctx, before_string, role_color)
 
@@ -261,7 +195,7 @@ class moderation(commands.Cog):
                     self.update_role_timed(m, role, add_bool, time))
 
         # send after message
-        after_string = self.after_string(
+        after_string = strings.after_string(
             everyone, roles, members, time, past)
         await msg.edit(embed=discord.Embed(description=after_string, color=role_color))
 
@@ -302,7 +236,7 @@ class moderation(commands.Cog):
                     final_members.remove(m)
                 if m in members:
                     members.remove(m)
-            await utility.error_message(ctx, self.higher_error(higher, "ban" if ban_bool else "unban"))
+            await utility.error_message(ctx, strings.higher_error_string(higher, "ban" if ban_bool else "unban"))
 
         if not time:
             # remove members in already from final_members and members
@@ -314,12 +248,12 @@ class moderation(commands.Cog):
 
             # send already error
             if already:
-                await utility.error_message(ctx, self.already_error(already, "banned" if ban_bool else "unbanned"))
+                await utility.error_message(ctx, strings.already_error_string(already, "banned" if ban_bool else "unbanned"))
                 if not final_members:
                     return
 
         # send before message
-        before_string = self.before_string(
+        before_string = strings.before_string(
             everyone, roles, members, time, "banning" if ban_bool else "unbanning")
         embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
 
@@ -339,7 +273,7 @@ class moderation(commands.Cog):
                     self.ban_timed(ctx.guild, m, ban_bool, time))
 
         # send after message
-        after_string = self.after_string(
+        after_string = strings.after_string(
             everyone, roles, members, time, "banned" if ban_bool else "unbanned")
         await msg.edit(embed=discord.Embed(description=after_string, color=colors.ban_color))
 
@@ -437,10 +371,10 @@ class moderation(commands.Cog):
                 higher.append(m)
 
         if higher:
-            await utility.error_message(ctx, self.higher_error(higher, "kick"))
+            await utility.error_message(ctx, strings.higher_error_string(higher, "kick"))
 
         # send before message
-        before_string = self.before_string(
+        before_string = strings.before_string(
             everyone, roles, members, time, "kicking")
         embed, msg = await utility.embed_message(ctx, before_string, colors.kick_color)
 
@@ -449,7 +383,7 @@ class moderation(commands.Cog):
             await ctx.guild.kick(m)
 
         # send after message
-        after_string = self.after_string(
+        after_string = strings.after_string(
             everyone, roles, members, time, "kicked")
         await msg.edit(embed=discord.Embed(description=after_string, color=colors.kick_color))
 
