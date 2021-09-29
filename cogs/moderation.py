@@ -293,7 +293,7 @@ class moderation(commands.Cog):
         overwrite = discord.PermissionOverwrite(send_messages=False)
         await self.role_command(ctx, args, False, "unmute", "unmuted", "unmuting", "Muted", overwrite, colors.muted_color)
 
-    @commands.command(aliases=["f"], brief="Prevents a user from adding reactions, sending files, sending embeds, or using external emojis.", help="%freeze [user(s) or role(s) or all] (time)")
+    @commands.command(aliases=["f"], brief="Prevents a user from reacting or sending files.", help="%freeze [user(s) or role(s) or all] (time)")
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
