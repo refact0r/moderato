@@ -7,7 +7,7 @@ from utils import colors
 from utils import utility
 import os
 
-cog_order = ['general', 'moderation']
+cog_order = ["general", "moderation"]
 
 
 class general(commands.Cog):
@@ -16,17 +16,24 @@ class general(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(aliases=['h'], brief="Shows all commands, commands in a category, or information about a command", help="%help (category or command)")
+    @commands.command(
+        aliases=["h"],
+        brief="Shows all commands, commands in a category, or information about a command",
+        help="%help (category or command)",
+        description="When used without arguments, this command will send a list of all commands. Use arrow reactions to navigate categories. You can also provide the name of a command to get more specific information.",
+    )
     async def help(self, ctx, command=None):
         if not command or command in [str(i + 1) for i in range(len(cog_order))]:
             embeds = []
-            embeds.append(discord.Embed(
-                title="Help",
-                description="""
+            embeds.append(
+                discord.Embed(
+                    title="Help",
+                    description="""
                     Click the reactions to go to categories, or use `%help [category]`.
                 """,
-                color=colors.help_color
-            ))
+                    color=colors.help_color,
+                )
+            )
 
             count = 1
             for cog_name in cog_order:
@@ -40,7 +47,7 @@ class general(commands.Cog):
                             For more info about a command, use `%help [command]`.
                             `()` means optional, `[]` means required.
                         """,
-                        color=colors.help_color
+                        color=colors.help_color,
                     )
                     embed.set_footer(text=f"Page {count}/{len(cog_order)}")
                     embeds.append(embed)
@@ -50,10 +57,14 @@ class general(commands.Cog):
                         if c.help and c.brief:
                             commands_string += f"```{c.help}```{c.brief}"
 
-                    embed.add_field(name=cog_name.capitalize(),
-                                    value=commands_string, inline=False)
+                    embed.add_field(
+                        name=cog_name.capitalize(), value=commands_string, inline=False
+                    )
                     embeds[0].add_field(
-                        name=f"Page {count} - {cog_name.capitalize()}", value=cog.description, inline=False)
+                        name=f"Page {count} - {cog_name.capitalize()}",
+                        value=cog.description,
+                        inline=False,
+                    )
 
                     count += 1
 
@@ -62,20 +73,23 @@ class general(commands.Cog):
                 current = int(command)
 
             msg = await ctx.send(embed=embeds[current])
-            await msg.add_reaction('◀️')
-            await msg.add_reaction('▶️')
+            await msg.add_reaction("◀️")
+            await msg.add_reaction("▶️")
 
             def check(reaction, user):
                 return reaction.message.id == msg.id and user != self.client.user
 
             while True:
                 try:
-                    reaction, user = await self.client.wait_for('reaction_add', timeout=300.0, check=check)
+                    reaction, user = await self.client.wait_for(
+                        "reaction_add", timeout=300.0, check=check
+                    )
                 except asyncio.TimeoutError:
-                    await msg.edit(embed=discord.Embed(
-                        description="Command timed out.",
-                        color=colors.help_color
-                    ))
+                    await msg.edit(
+                        embed=discord.Embed(
+                            description="Command timed out.", color=colors.help_color
+                        )
+                    )
                     await msg.clear_reactions()
                     return
 
@@ -84,12 +98,12 @@ class general(commands.Cog):
                 except:
                     pass
 
-                if reaction.emoji == '◀️':
+                if reaction.emoji == "◀️":
                     if current == 0:
                         current = len(embeds) - 1
                     else:
                         current -= 1
-                elif reaction.emoji == '▶️':
+                elif reaction.emoji == "▶️":
                     if current == len(embeds) - 1:
                         current = 0
                     else:
@@ -104,7 +118,7 @@ class general(commands.Cog):
     @commands.command(aliases=[], brief="Checks the bot's latency.", help="%ping")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def ping(self, ctx):
-        collection = self.client.db['ping']
+        collection = self.client.db["ping"]
 
         before = time.monotonic()
         embed, message = await utility.embed_message(ctx, "Pong!", colors.ping_color)
@@ -112,23 +126,29 @@ class general(commands.Cog):
         embed.description = f"Pong! `{ping}ms`"
         await message.edit(embed=embed)
 
-        if ping < collection.find_one({'_id': 0})['time']:
+        if ping < collection.find_one({"_id": 0})["time"]:
             collection.update_one(
-                {'_id': 0}, {'$set': {'time': ping, 'name': ctx.author.name}})
-        if ping > collection.find_one({'_id': 1})['time']:
+                {"_id": 0}, {"$set": {"time": ping, "name": ctx.author.name}}
+            )
+        if ping > collection.find_one({"_id": 1})["time"]:
             collection.update_one(
-                {'_id': 1}, {'$set': {'time': ping, 'name': ctx.author.name}})
+                {"_id": 1}, {"$set": {"time": ping, "name": ctx.author.name}}
+            )
 
-    @commands.command(aliases=['pl', 'plb'], brief="Gets the fastest and slowest pings achieved.", help="%pingleaderboard")
+    @commands.command(
+        aliases=["pl", "plb"],
+        brief="Gets the fastest and slowest pings achieved.",
+        help="%pingleaderboard",
+    )
     async def pingleaderboard(self, ctx):
-        collection = self.client.db['ping']
-        fastest = collection.find_one({'_id': 0})
-        slowest = collection.find_one({'_id': 1})
+        collection = self.client.db["ping"]
+        fastest = collection.find_one({"_id": 0})
+        slowest = collection.find_one({"_id": 1})
 
         embed = discord.Embed(
             title="Ping Leaderboard",
             description=f"Fastest: `{fastest['time']}` ms by {fastest['name']}\nSlowest: `{slowest['time']}` ms by {slowest['name']}",
-            color=colors.ping_color
+            color=colors.ping_color,
         )
         await ctx.send(embed=embed)
 

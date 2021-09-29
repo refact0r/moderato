@@ -11,11 +11,15 @@ class moderation(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.role_punishments = {
-            "Muted": {},
-            "Frozen": {},
-            "Exiled": {}
+        self.words = {
+            "mute": ["muted", "muting", "Muted"],
+            "unmute": ["unmuted", "unmuting", "Muted"],
+            "freeze": ["frozen", "freezing", "Frozen"],
+            "unfreeze": ["unfrozen", "unfreezing", "Frozen"],
+            "exile": ["exiled", "exiling", "Exiled"],
+            "unexile": ["unexiled", "unexiling", "Exiled"],
         }
+        self.role_punishments = {"Muted": {}, "Frozen": {}, "Exiled": {}}
         self.bans = {}
 
     def get_final_members(self, ctx, everyone, roles, members):
@@ -59,7 +63,7 @@ class moderation(commands.Cog):
 
     # parses members from args
     async def parse_args(self, ctx, args, time_bool):
-        args_list = args.split(' ')
+        args_list = args.split(" ")
         unparsed = []
         parsed = False
         everyone = False
@@ -72,10 +76,14 @@ class moderation(commands.Cog):
             time = utility.parse_time(args_list[-1])
             if time > 0:
                 args_list = args_list[:-1]
-                args = ' '.join(args_list)
+                args = " ".join(args_list)
 
         # check for "all" and @everyone
-        if len(args_list) == 1 and ("all" in args_list or "everyone" in args_list or ctx.message.mention_everyone):
+        if len(args_list) == 1 and (
+            "all" in args_list
+            or "everyone" in args_list
+            or ctx.message.mention_everyone
+        ):
             everyone = True
             parsed = True
 
@@ -120,7 +128,10 @@ class moderation(commands.Cog):
         return unparsed, everyone, roles, members, time
 
     # basic role moderation command
-    async def role_command(self, ctx, args, add_bool, verb, past, present, role_name, role_overwrite, role_color):
+    async def role_command(
+        self, ctx, args, add_bool, command, role_overwrite, role_color
+    ):
+        past, present, role_name = self.words[command]
 
         # find role or create if it doesnt exist
         role = None
@@ -134,11 +145,16 @@ class moderation(commands.Cog):
 
         # check if role is higher than bot
         if role > ctx.guild.get_member(self.client.user.id).top_role:
-            await utility.error_message(ctx, f"I can't run this command because the <@&{role.id}> role is higher than me.")
+            await utility.error_message(
+                ctx,
+                f"I can't run this command because the <@&{role.id}> role is higher than me.",
+            )
             return
 
         # parsed args
-        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args, True)
+        unparsed, everyone, roles, members, time = await self.parse_args(
+            ctx, args, True
+        )
         roles = list(roles)
         members = list(members)
 
@@ -170,13 +186,14 @@ class moderation(commands.Cog):
 
             # send already error
             if already:
-                await utility.error_message(ctx, strings.already_error_string(already, past))
+                await utility.error_message(
+                    ctx, strings.already_error_string(already, past)
+                )
                 if not final_members:
                     return
 
         # send before message
-        before_string = strings.before_string(
-            everyone, roles, members, time, present)
+        before_string = strings.before_string(everyone, roles, members, time, present)
         embed, msg = await utility.embed_message(ctx, before_string, role_color)
 
         for m in final_members:
@@ -192,15 +209,17 @@ class moderation(commands.Cog):
             # add a new timer if time is given
             if time:
                 self.role_punishments[role_name][m.id] = asyncio.create_task(
-                    self.update_role_timed(m, role, add_bool, time))
+                    self.update_role_timed(m, role, add_bool, time)
+                )
 
         # send after message
-        after_string = strings.after_string(
-            everyone, roles, members, time, past)
+        after_string = strings.after_string(everyone, roles, members, time, past)
         await msg.edit(embed=discord.Embed(description=after_string, color=role_color))
 
     async def ban_command(self, ctx, args, ban_bool):
-        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args, True)
+        unparsed, everyone, roles, members, time = await self.parse_args(
+            ctx, args, True
+        )
 
         roles = list(roles)
         members = list(members)
@@ -208,7 +227,11 @@ class moderation(commands.Cog):
         final_members = self.get_final_members(ctx, everyone, roles, members)
 
         if not final_members:
-            await ctx.send(embed=discord.Embed(description="No members found.", color=colors.error_color))
+            await ctx.send(
+                embed=discord.Embed(
+                    description="No members found.", color=colors.error_color
+                )
+            )
             return
 
         bans = await ctx.guild.bans()
@@ -236,7 +259,9 @@ class moderation(commands.Cog):
                     final_members.remove(m)
                 if m in members:
                     members.remove(m)
-            await utility.error_message(ctx, strings.higher_error_string(higher, "ban" if ban_bool else "unban"))
+            await utility.error_message(
+                ctx, strings.higher_error_string(higher, "ban" if ban_bool else "unban")
+            )
 
         if not time:
             # remove members in already from final_members and members
@@ -248,13 +273,19 @@ class moderation(commands.Cog):
 
             # send already error
             if already:
-                await utility.error_message(ctx, strings.already_error_string(already, "banned" if ban_bool else "unbanned"))
+                await utility.error_message(
+                    ctx,
+                    strings.already_error_string(
+                        already, "banned" if ban_bool else "unbanned"
+                    ),
+                )
                 if not final_members:
                     return
 
         # send before message
         before_string = strings.before_string(
-            everyone, roles, members, time, "banning" if ban_bool else "unbanning")
+            everyone, roles, members, time, "banning" if ban_bool else "unbanning"
+        )
         embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
 
         # ban members
@@ -270,85 +301,147 @@ class moderation(commands.Cog):
             # add a new timer if time is given
             if time:
                 self.bans[m.id] = asyncio.create_task(
-                    self.ban_timed(ctx.guild, m, ban_bool, time))
+                    self.ban_timed(ctx.guild, m, ban_bool, time)
+                )
 
         # send after message
         after_string = strings.after_string(
-            everyone, roles, members, time, "banned" if ban_bool else "unbanned")
-        await msg.edit(embed=discord.Embed(description=after_string, color=colors.ban_color))
+            everyone, roles, members, time, "banned" if ban_bool else "unbanned"
+        )
+        await msg.edit(
+            embed=discord.Embed(description=after_string, color=colors.ban_color)
+        )
 
-    @commands.command(aliases=["m"], brief="Prevents a user sending messages", help="%mute [user(s) or role(s) or all] (time)")
+    @commands.command(
+        aliases=["m"],
+        brief="Prevents a user sending messages",
+        help="%mute [user(s) or role(s) or all] (time)",
+    )
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def mute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages=False)
-        await self.role_command(ctx, args, True, "mute", "muted", "muting", "Muted", overwrite, colors.muted_color)
+        await self.role_command(ctx, args, True, "mute", overwrite, colors.muted_color)
 
-    @commands.command(aliases=["um"], brief="Unmutes a user.", help="%unmute [user(s) or role(s) or all]")
+    @commands.command(
+        aliases=["um"],
+        brief="Unmutes a user.",
+        help="%unmute [user(s) or role(s) or all]",
+    )
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def unmute(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(send_messages=False)
-        await self.role_command(ctx, args, False, "unmute", "unmuted", "unmuting", "Muted", overwrite, colors.muted_color)
+        await self.role_command(
+            ctx, args, False, "unmute", overwrite, colors.muted_color
+        )
 
-    @commands.command(aliases=["f"], brief="Prevents a user from reacting or sending files.", help="%freeze [user(s) or role(s) or all] (time)")
+    @commands.command(
+        aliases=["f"],
+        brief="Prevents a user from reacting or sending files.",
+        help="%freeze [user(s) or role(s) or all] (time)",
+    )
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def freeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(
-            add_reactions=False, attach_files=False, embed_links=False, external_emojis=False)
-        await self.role_command(ctx, args, True, "freeze", "frozen", "freezing", "Frozen", overwrite, colors.frozen_color)
+            add_reactions=False,
+            attach_files=False,
+            embed_links=False,
+            external_emojis=False,
+        )
+        await self.role_command(
+            ctx, args, True, "freeze", overwrite, colors.frozen_color
+        )
 
-    @commands.command(aliases=["uf"], brief="Unfreezes a user.", help="%unfreeze [user(s) or role(s) or all]")
+    @commands.command(
+        aliases=["uf"],
+        brief="Unfreezes a user.",
+        help="%unfreeze [user(s) or role(s) or all]",
+    )
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def unfreeze(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(
-            add_reactions=False, attach_files=False, embed_links=False, external_emojis=False)
-        await self.role_command(ctx, args, False, "unfreeze", "unfrozen", "unfreezing", "Frozen", overwrite, colors.frozen_color)
+            add_reactions=False,
+            attach_files=False,
+            embed_links=False,
+            external_emojis=False,
+        )
+        await self.role_command(
+            ctx, args, False, "unfreeze", overwrite, colors.frozen_color
+        )
 
-    @commands.command(aliases=["e"], brief="Prevents a user from viewing any channels.", help="%exile [user(s) or role(s) or all] (time)")
+    @commands.command(
+        aliases=["e"],
+        brief="Prevents a user from viewing any channels.",
+        help="%exile [user(s) or role(s) or all] (time)",
+    )
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def exile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(
-            view_channel=False, read_message_history=False)
-        await self.role_command(ctx, args, True, "exile", "exiled", "exiling", "Exiled", overwrite, colors.exiled_color)
+            view_channel=False, read_message_history=False
+        )
+        await self.role_command(
+            ctx, args, True, "exile", overwrite, colors.exiled_color
+        )
 
-    @commands.command(aliases=["ue"], brief="Unexiles a user.", help="%unexile [user(s) or role(s) or all]")
+    @commands.command(
+        aliases=["ue"],
+        brief="Unexiles a user.",
+        help="%unexile [user(s) or role(s) or all]",
+    )
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def unexile(self, ctx, *, args):
         overwrite = discord.PermissionOverwrite(
-            view_channel=False, read_message_history=False)
-        await self.role_command(ctx, args, False, "unexile", "unexiled", "unexiling", "Exiled", overwrite, colors.exiled_color)
+            view_channel=False, read_message_history=False
+        )
+        await self.role_command(
+            ctx, args, False, "unexile", overwrite, colors.exiled_color
+        )
 
-    @commands.command(aliases=["b"], brief="Bans a user.", help="%ban [user(s) or role(s) or all] (time)")
+    @commands.command(
+        aliases=["b"],
+        brief="Bans a user.",
+        help="%ban [user(s) or role(s) or all] (time)",
+    )
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     async def ban(self, ctx, *, args):
         await self.ban_command(ctx, args, True)
 
-    @commands.command(aliases=["ub"], brief="Unbans a user.", help="%unban [user(s) or role(s) or all] (time)")
+    @commands.command(
+        aliases=["ub"],
+        brief="Unbans a user.",
+        help="%unban [user(s) or role(s) or all] (time)",
+    )
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     async def unban(self, ctx, *, args):
         await self.ban_command(ctx, args, False)
 
-    @commands.command(aliases=["k"], brief="Kicks a user.", help="%kick [user(s) or role(s) or all] (time)")
+    @commands.command(
+        aliases=["k"],
+        brief="Kicks a user.",
+        help="%kick [user(s) or role(s) or all] (time)",
+    )
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
     @commands.guild_only()
     async def kick(self, ctx, *, args):
-        unparsed, everyone, roles, members, time = await self.parse_args(ctx, args, False)
+        unparsed, everyone, roles, members, time = await self.parse_args(
+            ctx, args, False
+        )
 
         roles = list(roles)
         members = list(members)
@@ -356,7 +449,11 @@ class moderation(commands.Cog):
         final_members = self.get_final_members(ctx, everyone, roles, members)
 
         if not final_members:
-            await ctx.send(embed=discord.Embed(description="No members found.", color=colors.error_color))
+            await ctx.send(
+                embed=discord.Embed(
+                    description="No members found.", color=colors.error_color
+                )
+            )
             return
 
         bot_member = ctx.guild.get_member(self.client.user.id)
@@ -371,11 +468,12 @@ class moderation(commands.Cog):
                 higher.append(m)
 
         if higher:
-            await utility.error_message(ctx, strings.higher_error_string(higher, "kick"))
+            await utility.error_message(
+                ctx, strings.higher_error_string(higher, "kick")
+            )
 
         # send before message
-        before_string = strings.before_string(
-            everyone, roles, members, time, "kicking")
+        before_string = strings.before_string(everyone, roles, members, time, "kicking")
         embed, msg = await utility.embed_message(ctx, before_string, colors.kick_color)
 
         # ban members
@@ -383,9 +481,10 @@ class moderation(commands.Cog):
             await ctx.guild.kick(m)
 
         # send after message
-        after_string = strings.after_string(
-            everyone, roles, members, time, "kicked")
-        await msg.edit(embed=discord.Embed(description=after_string, color=colors.kick_color))
+        after_string = strings.after_string(everyone, roles, members, time, "kicked")
+        await msg.edit(
+            embed=discord.Embed(description=after_string, color=colors.kick_color)
+        )
 
     @commands.command(aliases=["p"], brief="Purges messages.", help="%purge [number]")
     @commands.has_permissions(manage_messages=True)

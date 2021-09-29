@@ -10,7 +10,9 @@ def already_error_string(members, action):
 
 def higher_error_string(members, action):
     if len(members) == 1:
-        return f"I do not have the permissions to {action} the member <@{members[0].id}>."
+        return (
+            f"I do not have the permissions to {action} the member <@{members[0].id}>."
+        )
     else:
         return f"I do not have the permissions to {action} the members {', '.join([f'<@{m.id}>' for m in members])}."
 

@@ -3,22 +3,22 @@ import os
 from discord.ext import commands
 import pymongo
 
-bot_token = os.getenv('BOT_TOKEN')
+bot_token = os.getenv("BOT_TOKEN")
 
 intents = discord.Intents.default()
 intents.members = True
 intents.presences = True
 
-prefixes = ['%']
+prefixes = ["%"]
 client = commands.Bot(command_prefix=prefixes, intents=intents)
-client.remove_command('help')
+client.remove_command("help")
 
-cluster = pymongo.MongoClient(os.getenv('MONGODB_STRING'))
+cluster = pymongo.MongoClient(os.getenv("MONGODB_STRING"))
 client.db = cluster["discordbot"]
 
-for file in os.listdir('./cogs'):
-    if file.endswith('.py'):
-        client.load_extension(f'cogs.{file[:-3]}')
+for file in os.listdir("./cogs"):
+    if file.endswith(".py"):
+        client.load_extension(f"cogs.{file[:-3]}")
 
 
 @client.event
@@ -30,7 +30,10 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if client.user in message.mentions:
-        await message.channel.send(f"The current prefix is `{prefixes[0]}`.\nType `{prefixes[0]}help` for more info.")
+        await message.channel.send(
+            f"The current prefix is `{prefixes[0]}`.\nType `{prefixes[0]}help` for more info."
+        )
     await client.process_commands(message)
+
 
 client.run(bot_token)
