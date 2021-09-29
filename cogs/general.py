@@ -19,11 +19,11 @@ class general(commands.Cog):
     @commands.command(
         aliases=["h"],
         brief="Shows all commands, commands in a category, or information about a command",
-        help="%help (category or command)",
+        help="%help (command)",
         description="When used without arguments, this command will send a list of all commands. Use arrow reactions to navigate categories. You can also provide the name of a command to get more specific information.",
     )
-    async def help(self, ctx, command=None):
-        if not command or command in [str(i + 1) for i in range(len(cog_order))]:
+    async def help(self, ctx, name=None):
+        if not name:
             embeds = []
             embeds.append(
                 discord.Embed(
@@ -69,8 +69,8 @@ class general(commands.Cog):
                     count += 1
 
             current = 0
-            if command:
-                current = int(command)
+            if name:
+                current = int(name)
 
             msg = await ctx.send(embed=embeds[current])
             await msg.add_reaction("◀️")
@@ -110,6 +110,28 @@ class general(commands.Cog):
                         current += 1
 
                 await msg.edit(embed=embeds[current])
+        else:
+            command = None
+            for c in self.client.commands:
+                if c.name == name or name in c.aliases:
+                    command = c
+                    break
+
+            if not command:
+                await utility.error_message(ctx, "Invalid command.")
+                return
+
+            embed = discord.Embed(
+                title=f"{command.name.capitalize()}",
+                description=f"{command.brief}",
+                color=colors.help_color,
+            )
+            embed.add_field(name="Usage", value=f"```{command.help}```", inline=False)
+            embed.add_field(
+                name="Description", value=f"{command.description}", inline=False
+            )
+
+            await ctx.send(embed=embed)
 
     @commands.command(brief="Says hello back.", help="%hi")
     async def hi(self, ctx):
