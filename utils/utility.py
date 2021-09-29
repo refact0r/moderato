@@ -1,6 +1,6 @@
 import discord
 from decimal import Decimal
-import utils.colors
+from utils import colors
 
 # parse time in seconds from string
 def parse_time(string):
@@ -52,6 +52,6 @@ async def embed_message(ctx, message, color):
 async def error_message(ctx, message):
     embed = discord.Embed(
         description = message,
-        color = utils.colors.error_color
+        color = colors.error_color
     )
     return embed, await ctx.send(embed = embed)
