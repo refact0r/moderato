@@ -7,7 +7,7 @@ active project so expect bugs
 ## features
 
 - variety of punishments
-  - mute - prevent users from speaking
+  - mute - prevent users from sending messages
   - freeze - prevent users from reacting or sending files
   - exile - prevent users from seeing channels
   - ban
