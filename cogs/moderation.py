@@ -227,11 +227,7 @@ class moderation(commands.Cog):
         final_members = self.get_final_members(ctx, everyone, roles, members)
 
         if not final_members:
-            await ctx.send(
-                embed=discord.Embed(
-                    description="No members found.", color=colors.error_color
-                )
-            )
+            await utility.error_message(ctx, "No members found.")
             return
 
         bans = await ctx.guild.bans()
@@ -449,11 +445,7 @@ class moderation(commands.Cog):
         final_members = self.get_final_members(ctx, everyone, roles, members)
 
         if not final_members:
-            await ctx.send(
-                embed=discord.Embed(
-                    description="No members found.", color=colors.error_color
-                )
-            )
+            await utility.error_message(ctx, "No members found.")
             return
 
         bot_member = ctx.guild.get_member(self.client.user.id)
