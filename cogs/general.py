@@ -20,7 +20,10 @@ class general(commands.Cog):
         aliases=["h"],
         brief="Shows all commands, commands in a category, or information about a command",
         help="%help (command)",
-        description="When used without arguments, this command will send a list of all commands. Use arrow reactions to navigate categories. You can also provide the name of a command to get more specific information.",
+        description="""
+            When used without arguments, this command will send a list of all commands.
+            You can also provide the name of a command to get more specific information.
+        """,
     )
     async def help(self, ctx, name=None):
         if not name:
@@ -28,9 +31,7 @@ class general(commands.Cog):
             embeds.append(
                 discord.Embed(
                     title="Help",
-                    description="""
-                    Click the reactions to go to categories, or use `%help [category]`.
-                """,
+                    description="Click the reactions to navigate categories.",
                     color=colors.help_color,
                 )
             )
@@ -43,7 +44,7 @@ class general(commands.Cog):
                     embed = discord.Embed(
                         title="Help",
                         description="""
-                            Click the reactions to go to categories, or use `%help [category]`.
+                            Click the reactions to navigate categories.
                             For more info about a command, use `%help [command]`.
                             `()` means optional, `[]` means required.
                         """,
@@ -72,7 +73,7 @@ class general(commands.Cog):
             if name:
                 current = int(name)
 
-            msg = await ctx.send(embed=embeds[current])
+            msg = await ctx.reply(embed=embeds[current], mention_author=False)
             await msg.add_reaction("◀️")
             await msg.add_reaction("▶️")
 
@@ -133,9 +134,15 @@ class general(commands.Cog):
 
             await ctx.send(embed=embed)
 
-    @commands.command(brief="Says hello back.", help="%hi")
+    @commands.command(
+        brief="Says hello back.",
+        help="%hi",
+        description="""
+            Sends a message saying hello back.
+        """,
+    )
     async def hi(self, ctx):
-        await ctx.send(f"Hello, {ctx.author.display_name}")
+        await ctx.reply(f"Hello, {ctx.author.display_name}", mention_author=False)
 
     @commands.command(aliases=[], brief="Checks the bot's latency.", help="%ping")
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -172,7 +179,7 @@ class general(commands.Cog):
             description=f"Fastest: `{fastest['time']}` ms by {fastest['name']}\nSlowest: `{slowest['time']}` ms by {slowest['name']}",
             color=colors.ping_color,
         )
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed, mention_author=False)
 
 
 def setup(client):
