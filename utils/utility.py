@@ -45,10 +45,10 @@ def time_string(seconds):
 # show message in embed
 async def embed_message(ctx, message, color):
     embed = discord.Embed(description=message, color=color)
-    return embed, await ctx.send(embed=embed)
+    return embed, await ctx.reply(embed=embed, mention_author=False)
 
 
 # show error message in embed
 async def error_message(ctx, message):
     embed = discord.Embed(description=message, color=colors.error_color)
-    return embed, await ctx.send(embed=embed)
+    return embed, await ctx.reply(embed=embed, mention_author=False)
