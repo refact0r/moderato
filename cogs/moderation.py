@@ -614,6 +614,9 @@ class moderation(commands.Cog):
         help="%purge [number]",
         description="""
             Purges a certain number of messages.
+
+            **Examples**
+            ```%purge 10```
         """,
     )
     @commands.has_permissions(manage_messages=True)
