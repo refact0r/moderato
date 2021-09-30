@@ -1,8 +1,8 @@
 # moderato
 
-a moderation discord bot
+an advanced moderation discord bot
 
-currently private because some things are broken
+currently wip
 
 if i know you i'll probably give you an invite link if you want
 
