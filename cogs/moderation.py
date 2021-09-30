@@ -176,21 +176,17 @@ class moderation(commands.Cog):
             if (role in m.roles and add_bool) or (role not in m.roles and not add_bool):
                 already.append(m)
 
-        if not time:
-            # remove members in already from final_members and members
+        if not time and already:
             for m in already:
                 if m in final_members:
                     final_members.remove(m)
                 if m in members:
                     members.remove(m)
-
-            # send already error
-            if already:
-                await utility.error_message(
-                    ctx, strings.already_error_string(already, past)
-                )
-                if not final_members:
-                    return
+            await utility.error_message(
+                ctx, strings.already_error_string(already, past)
+            )
+            if not final_members:
+                return
 
         # send before message
         before_string = strings.before_string(everyone, roles, members, time, present)
@@ -222,7 +218,7 @@ class moderation(commands.Cog):
         help="%mute [user(s) or role(s) or all] (time)",
         description="""
             Gives targeted users the Muted role, preventing them from sending messages.
-            You can target users by typing their username, nickname or mentioning them.
+            You can target users by adding their username, nickname, id or mentioning them.
             You can also target users with a certain role.
             You can target everyone in the server by adding "all" or @everyone.
             Add a time at the end of the command to mute users for a certain amount of time.
@@ -265,7 +261,7 @@ class moderation(commands.Cog):
         help="%freeze [user(s) or role(s) or all] (time)",
         description="""
             Gives targeted users the Frozen role, preventing them from sending files/embeds, adding reactions, or using external emojis.
-            You can target users by typing their username, nickname or mentioning them.
+            You can target users by adding their username, nickname, id, or mentioning them.
             You can also target users with a certain role.
             You can target everyone in the server by adding "all" or @everyone.
             Add a time at the end of the command to freeze users for a certain amount of time.
@@ -320,7 +316,7 @@ class moderation(commands.Cog):
         help="%exile [user(s) or role(s) or all] (time)",
         description="""
             Gives targeted users the Exiled role, preventing them from viewing normal channels.
-            You can target users by typing their username, nickname or mentioning them.
+            You can target users by adding their username, nickname, id, or mentioning them.
             You can also target users with a certain role.
             You can target everyone in the server by adding "all" or @everyone.
             Add a time at the end of the command to exile users for a certain amount of time.
@@ -415,33 +411,23 @@ class moderation(commands.Cog):
                     final_members.remove(m)
                 if m in members:
                     members.remove(m)
-            await utility.error_message(
-                ctx, strings.higher_error_string(higher, "ban")
-            )
+            await utility.error_message(ctx, strings.higher_error_string(higher, "ban"))
 
-        if not time:
-            # remove members in already from final_members and members
+        if not time and already:
             for m in already:
                 if m in final_members:
                     final_members.remove(m)
                 if m in members:
                     members.remove(m)
-
-            # send already error
-            if already:
-                await utility.error_message(
-                    ctx,
-                    strings.already_error_string(
-                        already, "banned"
-                    ),
-                )
-                if not final_members:
-                    return
+            await utility.error_message(
+                ctx,
+                strings.already_error_string(already, "banned"),
+            )
+            if not final_members:
+                return
 
         # send before message
-        before_string = strings.before_string(
-            everyone, roles, members, time, "banning"
-        )
+        before_string = strings.before_string(everyone, roles, members, time, "banning")
         embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
 
         # ban members
@@ -458,32 +444,109 @@ class moderation(commands.Cog):
                 )
 
         # send after message
-        after_string = strings.after_string(
-            everyone, roles, members, time, "banned"
-        )
+        after_string = strings.after_string(everyone, roles, members, time, "banned")
         await msg.edit(
             embed=discord.Embed(description=after_string, color=colors.ban_color)
         )
 
-    '''
     @commands.command(
         aliases=["ub"],
         brief="Unbans a user.",
         help="%unban [user(s) or role(s) or all] (time)",
         description="""
             Unbans targeted users.
+            You can target users by typing their username or id.
+            You can unban all banned users by adding "all".
             Unbanning a users with a time will cause them to be banned again when the time has passed.
 
             **Examples**
-            ```%unban user1``````%unban user1 @user2``````%unban user1 @user2 3h```
+            ```%unban user1``````%unban user1 user2 3h``````%unban all```
         """,
     )
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     async def unban(self, ctx, *, args):
-    '''    
-    
+        users = set()
+        time = 0
+        args_list = args.split(" ")
+
+        if len(args_list) > 1:
+            time = utility.parse_time(args_list[-1])
+            if time > 0:
+                args_list = args_list[:-1]
+                args = " ".join(args_list)
+
+        bans = await ctx.guild.bans()
+        ban_ids = [m.user.id for m in bans]
+
+        if len(args_list) == 1 and "all" in args_list:
+            for banentry in bans:
+                users.add(banentry.user)
+
+        if not users:
+            try:
+                u = await commands.UserConverter().convert(ctx, args)
+                users.add(u)
+                parsed = True
+            except:
+                pass
+
+        if not users:
+            for arg in args_list:
+                try:
+                    u = await commands.UserConverter().convert(ctx, arg)
+                    users.add(u)
+                except:
+                    pass
+
+            for u in ctx.message.mentions:
+                users.add(u)
+
+        users = list(users)
+
+        if not users:
+            await utility.error_message(ctx, "No users found.")
+            return
+
+        already = []
+        for u in users:
+            if u.id not in ban_ids:
+                already.append(u)
+
+        if not time and already:
+            for u in already:
+                if u in users:
+                    users.remove(u)
+            await utility.error_message(
+                ctx, strings.already_error_string(already, "unbanned")
+            )
+            if not users:
+                return
+
+        # send before message
+        before_string = strings.before_string(False, [], users, time, "unbanning")
+        embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
+
+        for u in users:
+            if u not in already:
+                await ctx.guild.unban(u)
+            # if there is already a timer cancel it
+            if u.id in self.bans:
+                current = self.bans.pop(u.id)
+                current.cancel()
+            # add a new timer if time is given
+            if time:
+                self.bans[u.id] = asyncio.create_task(
+                    self.ban_timed(ctx.guild, u, False, time)
+                )
+
+        # send after message
+        after_string = strings.after_string(False, [], users, time, "unbanned")
+        await msg.edit(
+            embed=discord.Embed(description=after_string, color=colors.ban_color)
+        )
+
     @commands.command(
         aliases=["k"],
         brief="Kicks a user.",
@@ -546,8 +609,8 @@ class moderation(commands.Cog):
         )
 
     @commands.command(
-        aliases=["p"], 
-        brief="Purges messages.", 
+        aliases=["p"],
+        brief="Purges messages.",
         help="%purge [number]",
         description="""
             Purges a certain number of messages.
