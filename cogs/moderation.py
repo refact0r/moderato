@@ -216,7 +216,171 @@ class moderation(commands.Cog):
         after_string = strings.after_string(everyone, roles, members, time, past)
         await msg.edit(embed=discord.Embed(description=after_string, color=role_color))
 
-    async def ban_command(self, ctx, args, ban_bool):
+    @commands.command(
+        aliases=["m"],
+        brief="Prevents a user sending messages",
+        help="%mute [user(s) or role(s) or all] (time)",
+        description="""
+            Gives targeted users the Muted role, preventing them from sending messages.
+            You can target users by typing their username, nickname or mentioning them.
+            You can also target users with a certain role.
+            You can target everyone in the server by adding "all" or @everyone.
+            Add a time at the end of the command to mute users for a certain amount of time.
+
+            **Examples**
+            ```%mute user1``````%mute role1 user2 @user3``````%mute role1 user2 @user3 3h``````%mute all```
+        """,
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def mute(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(send_messages=False)
+        await self.role_command(ctx, args, True, "mute", overwrite, colors.muted_color)
+
+    @commands.command(
+        aliases=["um"],
+        brief="Unmutes a user.",
+        help="%unmute [user(s) or role(s) or all]",
+        description="""
+            Same as `%mute` (do `%help mute` for more info), but removes the Muted role instead.
+            Unmuting a users with a time will cause them to be muted again when the time has passed.
+
+            **Examples**
+            ```%unmute user1``````%unmute role1 user2 @user3``````%unmute role1 user2 @user3 3h``````%unmute all```
+        """,
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def unmute(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(send_messages=False)
+        await self.role_command(
+            ctx, args, False, "unmute", overwrite, colors.muted_color
+        )
+
+    @commands.command(
+        aliases=["f"],
+        brief="Prevents a user from reacting or sending files.",
+        help="%freeze [user(s) or role(s) or all] (time)",
+        description="""
+            Gives targeted users the Frozen role, preventing them from sending files/embeds, adding reactions, or using external emojis.
+            You can target users by typing their username, nickname or mentioning them.
+            You can also target users with a certain role.
+            You can target everyone in the server by adding "all" or @everyone.
+            Add a time at the end of the command to freeze users for a certain amount of time.
+
+            **Examples**
+            ```%freeze user1``````%freeze role1 user2 @user3``````%freeze role1 user2 @user3 3h``````%freeze all```
+        """,
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def freeze(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(
+            add_reactions=False,
+            attach_files=False,
+            embed_links=False,
+            external_emojis=False,
+        )
+        await self.role_command(
+            ctx, args, True, "freeze", overwrite, colors.frozen_color
+        )
+
+    @commands.command(
+        aliases=["uf"],
+        brief="Unfreezes a user.",
+        help="%unfreeze [user(s) or role(s) or all]",
+        description="""
+            Same as `%freeze` (do `%help freeze` for more info), but removes the Frozen role instead.
+            Unfreezing a users with a time will cause them to be frozen again when the time has passed.
+
+            **Examples**
+            ```%unfreeze user1``````%unfreeze role1 user2 @user3``````%unfreeze role1 user2 @user3 3h``````%unfreeze all```
+        """,
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def unfreeze(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(
+            add_reactions=False,
+            attach_files=False,
+            embed_links=False,
+            external_emojis=False,
+        )
+        await self.role_command(
+            ctx, args, False, "unfreeze", overwrite, colors.frozen_color
+        )
+
+    @commands.command(
+        aliases=["e"],
+        brief="Prevents a user from viewing any channels.",
+        help="%exile [user(s) or role(s) or all] (time)",
+        description="""
+            Gives targeted users the Exiled role, preventing them from viewing normal channels.
+            You can target users by typing their username, nickname or mentioning them.
+            You can also target users with a certain role.
+            You can target everyone in the server by adding "all" or @everyone.
+            Add a time at the end of the command to exile users for a certain amount of time.
+
+            **Examples**
+            ```%freeze user1``````%freeze role1 user2 @user3``````%freeze role1 user2 @user3 3h``````%freeze all```
+        """,
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def exile(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(
+            view_channel=False, read_message_history=False
+        )
+        await self.role_command(
+            ctx, args, True, "exile", overwrite, colors.exiled_color
+        )
+
+    @commands.command(
+        aliases=["ue"],
+        brief="Unexiles a user.",
+        help="%unexile [user(s) or role(s) or all]",
+        description="""
+            Same as `%exile` (do `%help exile` for more info), but removes the Exiled role instead.
+            Unexiling a users with a time will cause them to be exiled again when the time has passed.
+
+            **Examples**
+            ```%unexile user1``````%unexile role1 user2 @user3``````%unexile role1 user2 @user3 3h``````%unexile all```
+        """,
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def unexile(self, ctx, *, args):
+        overwrite = discord.PermissionOverwrite(
+            view_channel=False, read_message_history=False
+        )
+        await self.role_command(
+            ctx, args, False, "unexile", overwrite, colors.exiled_color
+        )
+
+    @commands.command(
+        aliases=["b"],
+        brief="Bans a user.",
+        help="%ban [user(s) or role(s) or all] (time)",
+        description="""
+            Bans targeted users.
+            You can target users by typing their username, nickname or mentioning them.
+            You can also target users with a certain role.
+            Add a time at the end of the command to ban users for a certain amount of time.
+
+            **Examples**
+            ```%ban user1``````%ban role1 user2 @user3``````%ban role1 user2 @user3 3h```
+        """,
+    )
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    @commands.guild_only()
+    async def ban(self, ctx, *, args):
         unparsed, everyone, roles, members, time = await self.parse_args(
             ctx, args, True
         )
@@ -240,14 +404,10 @@ class moderation(commands.Cog):
         for m in final_members:
             try:
                 banentry = await ctx.guild.fetch_ban(m)
-                if ban_bool:
-                    already.append(m)
+                already.append(m)
             except:
                 if m.top_role >= bot_member.top_role:
                     higher.append(m)
-                else:
-                    if not ban_bool:
-                        already.append(m)
 
         if higher:
             for m in higher:
@@ -256,7 +416,7 @@ class moderation(commands.Cog):
                 if m in members:
                     members.remove(m)
             await utility.error_message(
-                ctx, strings.higher_error_string(higher, "ban" if ban_bool else "unban")
+                ctx, strings.higher_error_string(higher, "ban")
             )
 
         if not time:
@@ -272,7 +432,7 @@ class moderation(commands.Cog):
                 await utility.error_message(
                     ctx,
                     strings.already_error_string(
-                        already, "banned" if ban_bool else "unbanned"
+                        already, "banned"
                     ),
                 )
                 if not final_members:
@@ -280,16 +440,13 @@ class moderation(commands.Cog):
 
         # send before message
         before_string = strings.before_string(
-            everyone, roles, members, time, "banning" if ban_bool else "unbanning"
+            everyone, roles, members, time, "banning"
         )
         embed, msg = await utility.embed_message(ctx, before_string, colors.ban_color)
 
         # ban members
         for m in final_members:
-            if ban_bool:
-                await ctx.guild.ban(m)
-            else:
-                await ctx.guild.unban(m)
+            await ctx.guild.ban(m)
             # if there is already a timer cancel it
             if m.id in self.bans:
                 current = self.bans.pop(m.id)
@@ -297,139 +454,49 @@ class moderation(commands.Cog):
             # add a new timer if time is given
             if time:
                 self.bans[m.id] = asyncio.create_task(
-                    self.ban_timed(ctx.guild, m, ban_bool, time)
+                    self.ban_timed(ctx.guild, m, True, time)
                 )
 
         # send after message
         after_string = strings.after_string(
-            everyone, roles, members, time, "banned" if ban_bool else "unbanned"
+            everyone, roles, members, time, "banned"
         )
         await msg.edit(
             embed=discord.Embed(description=after_string, color=colors.ban_color)
         )
 
-    @commands.command(
-        aliases=["m"],
-        brief="Prevents a user sending messages",
-        help="%mute [user(s) or role(s) or all] (time)",
-    )
-    @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
-    async def mute(self, ctx, *, args):
-        overwrite = discord.PermissionOverwrite(send_messages=False)
-        await self.role_command(ctx, args, True, "mute", overwrite, colors.muted_color)
-
-    @commands.command(
-        aliases=["um"],
-        brief="Unmutes a user.",
-        help="%unmute [user(s) or role(s) or all]",
-    )
-    @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
-    async def unmute(self, ctx, *, args):
-        overwrite = discord.PermissionOverwrite(send_messages=False)
-        await self.role_command(
-            ctx, args, False, "unmute", overwrite, colors.muted_color
-        )
-
-    @commands.command(
-        aliases=["f"],
-        brief="Prevents a user from reacting or sending files.",
-        help="%freeze [user(s) or role(s) or all] (time)",
-    )
-    @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
-    async def freeze(self, ctx, *, args):
-        overwrite = discord.PermissionOverwrite(
-            add_reactions=False,
-            attach_files=False,
-            embed_links=False,
-            external_emojis=False,
-        )
-        await self.role_command(
-            ctx, args, True, "freeze", overwrite, colors.frozen_color
-        )
-
-    @commands.command(
-        aliases=["uf"],
-        brief="Unfreezes a user.",
-        help="%unfreeze [user(s) or role(s) or all]",
-    )
-    @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
-    async def unfreeze(self, ctx, *, args):
-        overwrite = discord.PermissionOverwrite(
-            add_reactions=False,
-            attach_files=False,
-            embed_links=False,
-            external_emojis=False,
-        )
-        await self.role_command(
-            ctx, args, False, "unfreeze", overwrite, colors.frozen_color
-        )
-
-    @commands.command(
-        aliases=["e"],
-        brief="Prevents a user from viewing any channels.",
-        help="%exile [user(s) or role(s) or all] (time)",
-    )
-    @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
-    async def exile(self, ctx, *, args):
-        overwrite = discord.PermissionOverwrite(
-            view_channel=False, read_message_history=False
-        )
-        await self.role_command(
-            ctx, args, True, "exile", overwrite, colors.exiled_color
-        )
-
-    @commands.command(
-        aliases=["ue"],
-        brief="Unexiles a user.",
-        help="%unexile [user(s) or role(s) or all]",
-    )
-    @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    @commands.guild_only()
-    async def unexile(self, ctx, *, args):
-        overwrite = discord.PermissionOverwrite(
-            view_channel=False, read_message_history=False
-        )
-        await self.role_command(
-            ctx, args, False, "unexile", overwrite, colors.exiled_color
-        )
-
-    @commands.command(
-        aliases=["b"],
-        brief="Bans a user.",
-        help="%ban [user(s) or role(s) or all] (time)",
-    )
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
-    @commands.guild_only()
-    async def ban(self, ctx, *, args):
-        await self.ban_command(ctx, args, True)
-
+    '''
     @commands.command(
         aliases=["ub"],
         brief="Unbans a user.",
         help="%unban [user(s) or role(s) or all] (time)",
+        description="""
+            Unbans targeted users.
+            Unbanning a users with a time will cause them to be banned again when the time has passed.
+
+            **Examples**
+            ```%unban user1``````%unban user1 @user2``````%unban user1 @user2 3h```
+        """,
     )
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     async def unban(self, ctx, *, args):
-        await self.ban_command(ctx, args, False)
-
+    '''    
+    
     @commands.command(
         aliases=["k"],
         brief="Kicks a user.",
         help="%kick [user(s) or role(s) or all] (time)",
+        description="""
+            Kicks targeted users.
+            You can target users by typing their username, nickname or mentioning them.
+            You can also target users with a certain role.
+            Add a time at the end of the command to kick users for a certain amount of time.
+
+            **Examples**
+            ```%kick user1``````%kick role1 user2 @user3``````%kick role1 user2 @user3 3h```
+        """,
     )
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
@@ -478,7 +545,14 @@ class moderation(commands.Cog):
             embed=discord.Embed(description=after_string, color=colors.kick_color)
         )
 
-    @commands.command(aliases=["p"], brief="Purges messages.", help="%purge [number]")
+    @commands.command(
+        aliases=["p"], 
+        brief="Purges messages.", 
+        help="%purge [number]",
+        description="""
+            Purges a certain number of messages.
+        """,
+    )
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     @commands.guild_only()

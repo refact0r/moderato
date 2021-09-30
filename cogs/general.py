@@ -144,7 +144,14 @@ class general(commands.Cog):
     async def hi(self, ctx):
         await ctx.reply(f"Hello, {ctx.author.display_name}", mention_author=False)
 
-    @commands.command(aliases=[], brief="Checks the bot's latency.", help="%ping")
+    @commands.command(
+        aliases=[],
+        brief="Checks the bot's latency.",
+        help="%ping",
+        description="""
+            Checks the bot's latency by measuring how long it takes to send a message.
+        """,
+    )
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def ping(self, ctx):
         collection = self.client.db["ping"]
@@ -166,8 +173,11 @@ class general(commands.Cog):
 
     @commands.command(
         aliases=["pl", "plb"],
-        brief="Gets the fastest and slowest pings achieved.",
+        brief="Gets the ping leaderboard.",
         help="%pingleaderboard",
+        description="""
+            Gets a leaderboard with the fastest and slowest pings ever achieved.
+        """,
     )
     async def pingleaderboard(self, ctx):
         collection = self.client.db["ping"]
