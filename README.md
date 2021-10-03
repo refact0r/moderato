@@ -2,9 +2,29 @@
 
 an advanced moderation discord bot
 
-currently wip
+active project so expect bugs
 
-if i know you i'll probably give you an invite link if you want
+## features
+
+- variety of punishments
+  - mute - prevent users from sending messages
+  - freeze - prevent users from reacting or sending files
+  - exile - prevent users from seeing channels
+  - ban
+  - kick
+- timed punishments
+- advanced argument parser
+  - allows for punishing multiple specific members, all members with a role, or everyone in a server with a single command
+- other moderation features like purging messages
+- logical error messages
+
+## getting started
+
+invite link: https://discord.com/api/oauth2/authorize?client_id=804104627829211146&permissions=536870911991&scope=bot
+
+type `%help` to see a list of all commands.
+
+type `%help [name of command]` to see info on how to use a specific command
 
 ## contributing
 
