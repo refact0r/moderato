@@ -6,3 +6,4 @@ exiled_color = 0x202020
 ban_color = 0xE6735C
 kick_color = 0xE6A15C
 ping_color = 0x5CBAE6
+lock_color = 0x5c73e6
