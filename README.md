@@ -2,7 +2,9 @@
 
 an advanced moderation discord bot
 
-active project so expect bugs
+not really finished so expect bugs
+
+i work on this once in a while idk
 
 ## features
 
@@ -21,6 +23,8 @@ active project so expect bugs
 ## getting started
 
 invite link: https://discord.com/api/oauth2/authorize?client_id=804104627829211146&permissions=536870911991&scope=bot
+
+the bot might go offline at the end of each month because of limited heroku dyno hours
 
 type `%help` to see a list of all commands.
 
